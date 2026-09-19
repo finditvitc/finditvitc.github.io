@@ -1,0 +1,769 @@
+{
+  "items": [
+    {
+      "id": "item-88022add",
+      "title": "Casio Scientific Calculator fx-991EX",
+      "type": "lost",
+      "category": "Electronics",
+      "location": "Library",
+      "dateTime": "2026-09-18T17:25:18.721946Z",
+      "description": "Black Casio fx-991EX calculator left on 2nd floor desk",
+      "photoUrl": "http://localhost:8000/uploads/2a8a07fb3789.jpg",
+      "ai_tags": [
+        "Car",
+        "Transportation",
+        "Vehicle",
+        "Sedan",
+        "Bumper",
+        "Machine",
+        "Wheel",
+        "Tire",
+        "Alloy Wheel",
+        "Car Wheel",
+        "Spoke",
+        "Jaguar Car",
+        "Hatchback",
+        "Headlight",
+        "Coupe",
+        "Sports Car",
+        "License Plate",
+        "Suv",
+        "Car Dealership",
+        "Car Mirror",
+        "Car - Exterior",
+        "Windshield"
+      ],
+      "detected_labels": [
+        {
+          "name": "Car",
+          "confidence": 99.8
+        },
+        {
+          "name": "Sedan",
+          "confidence": 99.8
+        },
+        {
+          "name": "Bumper",
+          "confidence": 95.1
+        },
+        {
+          "name": "Machine",
+          "confidence": 91.1
+        },
+        {
+          "name": "Wheel",
+          "confidence": 91.1
+        },
+        {
+          "name": "Tire",
+          "confidence": 74.6
+        },
+        {
+          "name": "Alloy Wheel",
+          "confidence": 56.1
+        },
+        {
+          "name": "Jaguar Car",
+          "confidence": 54.3
+        },
+        {
+          "name": "Hatchback",
+          "confidence": 53.8
+        },
+        {
+          "name": "Headlight",
+          "confidence": 50.5
+        },
+        {
+          "name": "Coupe",
+          "confidence": 49.2
+        },
+        {
+          "name": "License Plate",
+          "confidence": 47.8
+        },
+        {
+          "name": "Suv",
+          "confidence": 47.2
+        },
+        {
+          "name": "Car Dealership",
+          "confidence": 47.1
+        },
+        {
+          "name": "Car Mirror",
+          "confidence": 46.3
+        },
+        {
+          "name": "Windshield",
+          "confidence": 45.3
+        }
+      ],
+      "status": "open",
+      "contactInfo": "student@campus.edu",
+      "userId": "usr-demo",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-18T17:25:18.721946Z",
+      "updatedAt": "2026-09-18T17:25:18.721946Z"
+    },
+    {
+      "id": "item-863d97bb",
+      "title": "Casio Scientific Calculator fx-991EX",
+      "type": "lost",
+      "category": "Electronics",
+      "location": "Library",
+      "dateTime": "2026-09-18T16:45:50.015341Z",
+      "description": "Black Casio fx-991EX calculator left on 2nd floor desk",
+      "photoUrl": "http://localhost:8000/uploads/6e914938252e.jpg",
+      "ai_tags": [
+        "Car",
+        "Transportation",
+        "Vehicle",
+        "Sedan",
+        "Bumper",
+        "Machine",
+        "Wheel",
+        "Tire",
+        "Alloy Wheel",
+        "Car Wheel",
+        "Spoke",
+        "Jaguar Car",
+        "Hatchback",
+        "Headlight",
+        "Coupe",
+        "Sports Car",
+        "License Plate",
+        "Suv",
+        "Car Dealership",
+        "Car Mirror",
+        "Car - Exterior",
+        "Windshield"
+      ],
+      "detected_labels": [
+        {
+          "name": "Car",
+          "confidence": 99.8
+        },
+        {
+          "name": "Sedan",
+          "confidence": 99.8
+        },
+        {
+          "name": "Bumper",
+          "confidence": 95.1
+        },
+        {
+          "name": "Machine",
+          "confidence": 91.1
+        },
+        {
+          "name": "Wheel",
+          "confidence": 91.1
+        },
+        {
+          "name": "Tire",
+          "confidence": 74.6
+        },
+        {
+          "name": "Alloy Wheel",
+          "confidence": 56.1
+        },
+        {
+          "name": "Jaguar Car",
+          "confidence": 54.3
+        },
+        {
+          "name": "Hatchback",
+          "confidence": 53.8
+        },
+        {
+          "name": "Headlight",
+          "confidence": 50.5
+        },
+        {
+          "name": "Coupe",
+          "confidence": 49.2
+        },
+        {
+          "name": "License Plate",
+          "confidence": 47.8
+        },
+        {
+          "name": "Suv",
+          "confidence": 47.2
+        },
+        {
+          "name": "Car Dealership",
+          "confidence": 47.1
+        },
+        {
+          "name": "Car Mirror",
+          "confidence": 46.3
+        },
+        {
+          "name": "Windshield",
+          "confidence": 45.3
+        }
+      ],
+      "status": "open",
+      "contactInfo": "student@campus.edu",
+      "userId": "usr-demo",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-18T16:45:50.015341Z",
+      "updatedAt": "2026-09-18T16:45:50.015341Z"
+    },
+    {
+      "id": "item-cd1ef520",
+      "title": "Casio Scientific Calculator fx-991EX",
+      "type": "lost",
+      "category": "Electronics",
+      "location": "Library",
+      "dateTime": "2026-09-18T16:36:31.791309Z",
+      "description": "Black Casio fx-991EX calculator left on 2nd floor desk",
+      "photoUrl": "http://localhost:8000/uploads/f259c0bda1bb.jpg",
+      "ai_tags": [
+        "Car",
+        "Transportation",
+        "Vehicle",
+        "Sedan",
+        "Bumper",
+        "Machine",
+        "Wheel",
+        "Tire",
+        "Alloy Wheel",
+        "Car Wheel",
+        "Spoke",
+        "Jaguar Car",
+        "Hatchback",
+        "Headlight",
+        "Coupe",
+        "Sports Car",
+        "License Plate",
+        "Suv",
+        "Car Dealership",
+        "Car Mirror",
+        "Car - Exterior",
+        "Windshield"
+      ],
+      "detected_labels": [
+        {
+          "name": "Car",
+          "confidence": 99.8
+        },
+        {
+          "name": "Sedan",
+          "confidence": 99.8
+        },
+        {
+          "name": "Bumper",
+          "confidence": 95.1
+        },
+        {
+          "name": "Machine",
+          "confidence": 91.1
+        },
+        {
+          "name": "Wheel",
+          "confidence": 91.1
+        },
+        {
+          "name": "Tire",
+          "confidence": 74.6
+        },
+        {
+          "name": "Alloy Wheel",
+          "confidence": 56.1
+        },
+        {
+          "name": "Jaguar Car",
+          "confidence": 54.3
+        },
+        {
+          "name": "Hatchback",
+          "confidence": 53.8
+        },
+        {
+          "name": "Headlight",
+          "confidence": 50.5
+        },
+        {
+          "name": "Coupe",
+          "confidence": 49.2
+        },
+        {
+          "name": "License Plate",
+          "confidence": 47.8
+        },
+        {
+          "name": "Suv",
+          "confidence": 47.2
+        },
+        {
+          "name": "Car Dealership",
+          "confidence": 47.1
+        },
+        {
+          "name": "Car Mirror",
+          "confidence": 46.3
+        },
+        {
+          "name": "Windshield",
+          "confidence": 45.3
+        }
+      ],
+      "status": "open",
+      "contactInfo": "student@campus.edu",
+      "userId": "usr-demo",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-18T16:36:31.791309Z",
+      "updatedAt": "2026-09-18T16:36:31.791309Z"
+    },
+    {
+      "id": "item-7d082749",
+      "title": "Casio Scientific Calculator fx-991EX",
+      "type": "lost",
+      "category": "Electronics",
+      "location": "Library",
+      "dateTime": "2026-09-18T16:34:43.456541Z",
+      "description": "Black Casio fx-991EX calculator left on 2nd floor desk",
+      "photoUrl": "http://localhost:8000/uploads/c620f9509660.jpg",
+      "ai_tags": [
+        "Car",
+        "Transportation",
+        "Vehicle",
+        "Sedan",
+        "Bumper",
+        "Machine",
+        "Wheel",
+        "Tire",
+        "Alloy Wheel",
+        "Car Wheel",
+        "Spoke",
+        "Jaguar Car",
+        "Hatchback",
+        "Headlight",
+        "Coupe",
+        "Sports Car",
+        "License Plate",
+        "Suv",
+        "Car Dealership",
+        "Car Mirror",
+        "Car - Exterior",
+        "Windshield"
+      ],
+      "detected_labels": [
+        {
+          "name": "Car",
+          "confidence": 99.8
+        },
+        {
+          "name": "Sedan",
+          "confidence": 99.8
+        },
+        {
+          "name": "Bumper",
+          "confidence": 95.1
+        },
+        {
+          "name": "Machine",
+          "confidence": 91.1
+        },
+        {
+          "name": "Wheel",
+          "confidence": 91.1
+        },
+        {
+          "name": "Tire",
+          "confidence": 74.6
+        },
+        {
+          "name": "Alloy Wheel",
+          "confidence": 56.1
+        },
+        {
+          "name": "Jaguar Car",
+          "confidence": 54.3
+        },
+        {
+          "name": "Hatchback",
+          "confidence": 53.8
+        },
+        {
+          "name": "Headlight",
+          "confidence": 50.5
+        },
+        {
+          "name": "Coupe",
+          "confidence": 49.2
+        },
+        {
+          "name": "License Plate",
+          "confidence": 47.8
+        },
+        {
+          "name": "Suv",
+          "confidence": 47.2
+        },
+        {
+          "name": "Car Dealership",
+          "confidence": 47.1
+        },
+        {
+          "name": "Car Mirror",
+          "confidence": 46.3
+        },
+        {
+          "name": "Windshield",
+          "confidence": 45.3
+        }
+      ],
+      "status": "open",
+      "contactInfo": "student@campus.edu",
+      "userId": "usr-demo",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-18T16:34:43.456541Z",
+      "updatedAt": "2026-09-18T16:34:43.456541Z"
+    },
+    {
+      "id": "item-86190337",
+      "title": "Casio Scientific Calculator fx-991EX",
+      "type": "lost",
+      "category": "Electronics",
+      "location": "Library",
+      "dateTime": "2026-09-18T16:32:17.653893Z",
+      "description": "Black Casio fx-991EX calculator left on 2nd floor desk",
+      "photoUrl": "http://localhost:8000/uploads/1c3a992782e4.jpg",
+      "ai_tags": [
+        "Car",
+        "Transportation",
+        "Vehicle",
+        "Sedan",
+        "Bumper",
+        "Machine",
+        "Wheel",
+        "Tire",
+        "Alloy Wheel",
+        "Car Wheel",
+        "Spoke",
+        "Jaguar Car",
+        "Hatchback",
+        "Headlight",
+        "Coupe",
+        "Sports Car",
+        "License Plate",
+        "Suv",
+        "Car Dealership",
+        "Car Mirror",
+        "Car - Exterior",
+        "Windshield"
+      ],
+      "detected_labels": [
+        {
+          "name": "Car",
+          "confidence": 99.8
+        },
+        {
+          "name": "Sedan",
+          "confidence": 99.8
+        },
+        {
+          "name": "Bumper",
+          "confidence": 95.1
+        },
+        {
+          "name": "Machine",
+          "confidence": 91.1
+        },
+        {
+          "name": "Wheel",
+          "confidence": 91.1
+        },
+        {
+          "name": "Tire",
+          "confidence": 74.6
+        },
+        {
+          "name": "Alloy Wheel",
+          "confidence": 56.1
+        },
+        {
+          "name": "Jaguar Car",
+          "confidence": 54.3
+        },
+        {
+          "name": "Hatchback",
+          "confidence": 53.8
+        },
+        {
+          "name": "Headlight",
+          "confidence": 50.5
+        },
+        {
+          "name": "Coupe",
+          "confidence": 49.2
+        },
+        {
+          "name": "License Plate",
+          "confidence": 47.8
+        },
+        {
+          "name": "Suv",
+          "confidence": 47.2
+        },
+        {
+          "name": "Car Dealership",
+          "confidence": 47.1
+        },
+        {
+          "name": "Car Mirror",
+          "confidence": 46.3
+        },
+        {
+          "name": "Windshield",
+          "confidence": 45.3
+        }
+      ],
+      "status": "open",
+      "contactInfo": "student@campus.edu",
+      "userId": "usr-demo",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-18T16:32:17.653893Z",
+      "updatedAt": "2026-09-18T16:32:17.653893Z"
+    },
+    {
+      "id": "item-736da3c7",
+      "title": "Casio Scientific Calculator fx-991EX",
+      "type": "lost",
+      "category": "Electronics",
+      "location": "Library",
+      "dateTime": "2026-09-18T14:02:25.686526Z",
+      "description": "Black Casio fx-991EX calculator left on 2nd floor desk",
+      "photoUrl": "http://localhost:8000/uploads/30f6e1871865.jpg",
+      "ai_tags": [
+        "Car",
+        "Transportation",
+        "Vehicle",
+        "Sedan",
+        "Bumper",
+        "Machine",
+        "Wheel",
+        "Tire",
+        "Alloy Wheel",
+        "Car Wheel",
+        "Spoke",
+        "Jaguar Car",
+        "Hatchback",
+        "Headlight",
+        "Coupe",
+        "Sports Car",
+        "License Plate",
+        "Suv",
+        "Car Dealership",
+        "Car Mirror",
+        "Car - Exterior",
+        "Windshield"
+      ],
+      "detected_labels": [
+        {
+          "name": "Car",
+          "confidence": 99.8
+        },
+        {
+          "name": "Sedan",
+          "confidence": 99.8
+        },
+        {
+          "name": "Bumper",
+          "confidence": 95.1
+        },
+        {
+          "name": "Machine",
+          "confidence": 91.1
+        },
+        {
+          "name": "Wheel",
+          "confidence": 91.1
+        },
+        {
+          "name": "Tire",
+          "confidence": 74.6
+        },
+        {
+          "name": "Alloy Wheel",
+          "confidence": 56.1
+        },
+        {
+          "name": "Jaguar Car",
+          "confidence": 54.3
+        },
+        {
+          "name": "Hatchback",
+          "confidence": 53.8
+        },
+        {
+          "name": "Headlight",
+          "confidence": 50.5
+        },
+        {
+          "name": "Coupe",
+          "confidence": 49.2
+        },
+        {
+          "name": "License Plate",
+          "confidence": 47.8
+        },
+        {
+          "name": "Suv",
+          "confidence": 47.2
+        },
+        {
+          "name": "Car Dealership",
+          "confidence": 47.1
+        },
+        {
+          "name": "Car Mirror",
+          "confidence": 46.3
+        },
+        {
+          "name": "Windshield",
+          "confidence": 45.3
+        }
+      ],
+      "status": "open",
+      "contactInfo": "student@campus.edu",
+      "userId": "usr-demo",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-18T14:02:25.686526Z",
+      "updatedAt": "2026-09-18T14:02:25.686526Z"
+    },
+    {
+      "id": "item-b9914e5e",
+      "title": "Casio Scientific Calculator fx-991EX",
+      "type": "lost",
+      "category": "Electronics",
+      "location": "Library",
+      "dateTime": "2026-09-18T10:48:55.634390Z",
+      "description": "Black Casio fx-991EX calculator left on 2nd floor desk",
+      "photoUrl": "http://localhost:8000/uploads/7e7855889915.jpg",
+      "ai_tags": [
+        "Car",
+        "Transportation",
+        "Vehicle",
+        "Sedan",
+        "Bumper",
+        "Machine",
+        "Wheel",
+        "Tire",
+        "Alloy Wheel",
+        "Car Wheel",
+        "Spoke",
+        "Jaguar Car",
+        "Hatchback",
+        "Headlight",
+        "Coupe",
+        "Sports Car",
+        "License Plate",
+        "Suv",
+        "Car Dealership",
+        "Car Mirror",
+        "Car - Exterior",
+        "Windshield"
+      ],
+      "detected_labels": [
+        {
+          "name": "Car",
+          "confidence": 99.8
+        },
+        {
+          "name": "Sedan",
+          "confidence": 99.8
+        },
+        {
+          "name": "Bumper",
+          "confidence": 95.1
+        },
+        {
+          "name": "Machine",
+          "confidence": 91.1
+        },
+        {
+          "name": "Wheel",
+          "confidence": 91.1
+        },
+        {
+          "name": "Tire",
+          "confidence": 74.6
+        },
+        {
+          "name": "Alloy Wheel",
+          "confidence": 56.1
+        },
+        {
+          "name": "Jaguar Car",
+          "confidence": 54.3
+        },
+        {
+          "name": "Hatchback",
+          "confidence": 53.8
+        },
+        {
+          "name": "Headlight",
+          "confidence": 50.5
+        },
+        {
+          "name": "Coupe",
+          "confidence": 49.2
+        },
+        {
+          "name": "License Plate",
+          "confidence": 47.8
+        },
+        {
+          "name": "Suv",
+          "confidence": 47.2
+        },
+        {
+          "name": "Car Dealership",
+          "confidence": 47.1
+        },
+        {
+          "name": "Car Mirror",
+          "confidence": 46.3
+        },
+        {
+          "name": "Windshield",
+          "confidence": 45.3
+        }
+      ],
+      "status": "open",
+      "contactInfo": "student@campus.edu",
+      "userId": "usr-demo",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-18T10:48:55.634390Z",
+      "updatedAt": "2026-09-18T10:48:55.634390Z"
+    },
+    {
+      "id": "item-e52fff53",
+      "title": "Casio Scientific Calculator fx-991EX",
+      "type": "lost",
+      "category": "Electronics",
+      "location": "Library",
+      "dateTime": "2026-09-18T10:48:26.619658Z",
+      "description": "Black Casio fx-991EX calculator left on 2nd floor desk",
+      "photoUrl": "",
+      "ai_tags": [
+        "Calculator",
+        "Electronics"
+      ],
+      "detected_labels": [],
+      "status": "open",
+      "contactInfo": "student@campus.edu",
+      "userId": "usr-demo",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-18T10:48:26.619658Z",
+      "updatedAt": "2026-09-18T10:48:26.619658Z"
+    }
+  ],
+  "alerts": [],
+  "subscriptions": []
+}

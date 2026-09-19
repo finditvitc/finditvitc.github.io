@@ -1,0 +1,564 @@
+{
+  "items": [
+    {
+      "id": "item-a7da1e96",
+      "title": "Space Gray MacBook Air with Apple Sticker",
+      "type": "lost",
+      "category": "Electronics",
+      "location": "Library Stacks",
+      "dateTime": "2026-09-16T12:00:00Z",
+      "description": "Has a green sticker on the aluminum lid",
+      "photoUrl": "",
+      "ai_tags": [
+        "Laptop",
+        "Computer",
+        "Electronics",
+        "Screen",
+        "Keyboard",
+        "Identity Card",
+        "Card",
+        "Document",
+        "Plastic",
+        "Access Badge",
+        "Book",
+        "Textbook",
+        "Publication",
+        "Paper",
+        "Notebook",
+        "Gray",
+        "Space Gray",
+        "Green"
+      ],
+      "detected_labels": [
+        {
+          "name": "Laptop",
+          "confidence": 98.8
+        },
+        {
+          "name": "Computer",
+          "confidence": 97.5
+        },
+        {
+          "name": "Electronics",
+          "confidence": 96.2
+        },
+        {
+          "name": "Screen",
+          "confidence": 92.0
+        },
+        {
+          "name": "Keyboard",
+          "confidence": 89.5
+        },
+        {
+          "name": "Identity Card",
+          "confidence": 98.9
+        },
+        {
+          "name": "Card",
+          "confidence": 97.8
+        },
+        {
+          "name": "Document",
+          "confidence": 95.0
+        },
+        {
+          "name": "Plastic",
+          "confidence": 92.5
+        },
+        {
+          "name": "Access Badge",
+          "confidence": 89.0
+        },
+        {
+          "name": "Book",
+          "confidence": 98.8
+        },
+        {
+          "name": "Textbook",
+          "confidence": 96.5
+        },
+        {
+          "name": "Publication",
+          "confidence": 93.0
+        },
+        {
+          "name": "Paper",
+          "confidence": 90.5
+        },
+        {
+          "name": "Notebook",
+          "confidence": 88.0
+        },
+        {
+          "name": "Gray",
+          "confidence": 90.0
+        },
+        {
+          "name": "Space Gray",
+          "confidence": 90.0
+        },
+        {
+          "name": "Green",
+          "confidence": 90.0
+        }
+      ],
+      "status": "open",
+      "contactInfo": "alex.student@campus.edu",
+      "userId": "usr-demo",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-16T16:34:23.662397Z",
+      "updatedAt": "2026-09-16T16:34:23.662397Z"
+    },
+    {
+      "id": "item-09fa168b",
+      "title": "Test Real Key Photo Item",
+      "type": "lost",
+      "category": "Keys",
+      "location": "Science Quad",
+      "dateTime": "2026-09-16T12:00:00Z",
+      "description": "Real key with custom photo",
+      "photoUrl": "/uploads/f2f8d87c8809.jpg",
+      "ai_tags": [],
+      "detected_labels": [],
+      "status": "open",
+      "contactInfo": "alex.student@campus.edu",
+      "userId": "usr-alex-001",
+      "userEmail": "alex.student@campus.edu",
+      "createdAt": "2026-09-16T16:20:06.392835Z",
+      "updatedAt": "2026-09-16T16:20:06.392835Z"
+    },
+    {
+      "id": "item-3ece2cc2",
+      "title": "Subaru Key Fob",
+      "type": "lost",
+      "category": "Keys",
+      "location": "Science Quad",
+      "dateTime": "2026-09-16T12:26:34.108931Z",
+      "description": "Black key fob with silver subaru logo",
+      "photoUrl": "https://images.unsplash.com/photo-1586769852044-692d6e3703f0?w=600&auto=format&fit=crop&q=80",
+      "ai_tags": [],
+      "detected_labels": [],
+      "status": "claimed",
+      "contactInfo": "student@campus.edu",
+      "userId": "usr-demo",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-16T12:26:34.108931Z",
+      "updatedAt": "2026-09-16T12:26:34.113959Z"
+    },
+    {
+      "id": "item-52d6d4d5",
+      "title": "Lost Car Keys",
+      "type": "lost",
+      "category": "Keys",
+      "location": "Library",
+      "dateTime": "2026-09-16T11:07:51.555514",
+      "description": "Subaru car key on black lanyard",
+      "photoUrl": "https://images.unsplash.com/photo-1586769852044-692d6e3703f0?w=600&auto=format&fit=crop&q=80",
+      "ai_tags": [],
+      "detected_labels": [],
+      "status": "open",
+      "contactInfo": "student@campus.edu",
+      "userId": "usr-demo",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-16T12:07:51.559023Z",
+      "updatedAt": "2026-09-16T12:07:51.559023Z"
+    },
+    {
+      "id": "item-ca0e5dea",
+      "title": "Found Math Textbook Near Cafe Tables",
+      "type": "found",
+      "category": "Books",
+      "location": "Science Library Coffee Counter",
+      "dateTime": "2026-09-16T11:25:11.432735Z",
+      "description": "James Stewart Calculus book found on chair",
+      "photoUrl": "https://images.unsplash.com/photo-1586769852044-692d6e3703f0?w=600&auto=format&fit=crop&q=80",
+      "ai_tags": [
+        "Book",
+        "Paper",
+        "Textbook",
+        "Publication",
+        "Notebook"
+      ],
+      "detected_labels": [
+        {
+          "name": "Book",
+          "confidence": 95.0
+        },
+        {
+          "name": "Paper",
+          "confidence": 91.5
+        },
+        {
+          "name": "Textbook",
+          "confidence": 88.0
+        },
+        {
+          "name": "Publication",
+          "confidence": 84.5
+        },
+        {
+          "name": "Notebook",
+          "confidence": 81.0
+        }
+      ],
+      "status": "open",
+      "contactInfo": "library-desk@campus.edu",
+      "userId": "usr-staff-002",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-16T11:25:11.432735Z",
+      "updatedAt": "2026-09-16T11:25:11.432735Z"
+    },
+    {
+      "id": "item-62c3901a",
+      "title": "Lost Calculus Textbook (Stewart 9th Ed)",
+      "type": "lost",
+      "category": "Books",
+      "location": "Science Library 1st Floor Cafe",
+      "dateTime": "2026-09-16T11:25:09.398221Z",
+      "description": "Hardcover textbook with highlighted chapters 4 and 5",
+      "photoUrl": "https://images.unsplash.com/photo-1586769852044-692d6e3703f0?w=600&auto=format&fit=crop&q=80",
+      "ai_tags": [
+        "Book",
+        "Paper",
+        "Textbook",
+        "Publication",
+        "Notebook"
+      ],
+      "detected_labels": [
+        {
+          "name": "Book",
+          "confidence": 95.0
+        },
+        {
+          "name": "Paper",
+          "confidence": 91.5
+        },
+        {
+          "name": "Textbook",
+          "confidence": 88.0
+        },
+        {
+          "name": "Publication",
+          "confidence": 84.5
+        },
+        {
+          "name": "Notebook",
+          "confidence": 81.0
+        }
+      ],
+      "status": "open",
+      "contactInfo": "alex.student@campus.edu",
+      "userId": "usr-alex-001",
+      "userEmail": "student@campus.edu",
+      "createdAt": "2026-09-16T11:25:09.398221Z",
+      "updatedAt": "2026-09-16T11:25:09.398221Z"
+    },
+    {
+      "id": "item-seed-1",
+      "title": "MacBook Air 13-inch (Space Gray)",
+      "type": "lost",
+      "category": "Electronics",
+      "location": "Science Library 3rd Floor Stacks",
+      "dateTime": "2026-09-09T02:56:41.429923Z",
+      "description": "Left my laptop in a study carrel. Has a GitHub and NASA sticker on the lid. Very important for my senior thesis!",
+      "photoUrl": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&auto=format&fit=crop&q=80",
+      "ai_tags": [
+        "Laptop",
+        "Computer",
+        "Electronics",
+        "Keyboard",
+        "Space Gray",
+        "Screen"
+      ],
+      "detected_labels": [
+        {
+          "name": "Laptop",
+          "confidence": 98.6
+        },
+        {
+          "name": "Computer",
+          "confidence": 97.2
+        },
+        {
+          "name": "Electronics",
+          "confidence": 95.8
+        },
+        {
+          "name": "Keyboard",
+          "confidence": 91.4
+        }
+      ],
+      "status": "open",
+      "contactInfo": "alex.student@campus.edu",
+      "userId": "usr-alex-001",
+      "userEmail": "alex.student@campus.edu",
+      "createdAt": "2026-09-09T02:56:41.429980Z",
+      "updatedAt": "2026-09-09T02:56:41.430004Z"
+    },
+    {
+      "id": "item-seed-2",
+      "title": "Apple Laptop with Tech Stickers",
+      "type": "found",
+      "category": "Electronics",
+      "location": "Main Campus Library Circulation Desk",
+      "dateTime": "2026-09-09T05:56:41.430024Z",
+      "description": "Found a dark gray laptop on a desk in the upper study level. Handed over to library staff at desk 2.",
+      "photoUrl": "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=600&auto=format&fit=crop&q=80",
+      "ai_tags": [
+        "Laptop",
+        "Computer",
+        "Electronics",
+        "Space Gray",
+        "Personal Computer"
+      ],
+      "detected_labels": [
+        {
+          "name": "Laptop",
+          "confidence": 99.1
+        },
+        {
+          "name": "Computer",
+          "confidence": 98.0
+        },
+        {
+          "name": "Electronics",
+          "confidence": 96.5
+        }
+      ],
+      "status": "open",
+      "contactInfo": "library-lostfound@campus.edu",
+      "userId": "usr-staff-002",
+      "userEmail": "library-staff@campus.edu",
+      "createdAt": "2026-09-09T05:56:41.430048Z",
+      "updatedAt": "2026-09-09T05:56:41.430065Z"
+    },
+    {
+      "id": "item-seed-3",
+      "title": "Navy Blue Fj\u00e4llr\u00e4ven K\u00e5nken Backpack",
+      "type": "lost",
+      "category": "Bags & Backpacks",
+      "location": "Student Union Dining Commons",
+      "dateTime": "2026-09-08T07:56:41.430091Z",
+      "description": "Left on a chair near the pizza counter during lunchtime. Has my calculus textbook and student ID card inside.",
+      "photoUrl": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80",
+      "ai_tags": [
+        "Backpack",
+        "Bag",
+        "Blue",
+        "Luggage",
+        "Canvas",
+        "Strap"
+      ],
+      "detected_labels": [
+        {
+          "name": "Backpack",
+          "confidence": 99.4
+        },
+        {
+          "name": "Bag",
+          "confidence": 98.7
+        },
+        {
+          "name": "Blue",
+          "confidence": 92.1
+        }
+      ],
+      "status": "open",
+      "contactInfo": "sarah.chen@campus.edu",
+      "userId": "usr-sarah-003",
+      "userEmail": "sarah.chen@campus.edu",
+      "createdAt": "2026-09-08T07:56:41.430111Z",
+      "updatedAt": "2026-09-08T07:56:41.430128Z"
+    },
+    {
+      "id": "item-seed-4",
+      "title": "Blue Canvas Daypack Found in Dining Hall",
+      "type": "found",
+      "category": "Bags & Backpacks",
+      "location": "Student Center Information Desk",
+      "dateTime": "2026-09-08T13:56:41.430145Z",
+      "description": "Dark blue backpack found near food court tables. Safe at Campus Security lost & found bin #4.",
+      "photoUrl": "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=600&auto=format&fit=crop&q=80",
+      "ai_tags": [
+        "Backpack",
+        "Bag",
+        "Blue",
+        "Canvas",
+        "Pocket"
+      ],
+      "detected_labels": [
+        {
+          "name": "Backpack",
+          "confidence": 97.9
+        },
+        {
+          "name": "Bag",
+          "confidence": 96.4
+        },
+        {
+          "name": "Blue",
+          "confidence": 90.5
+        }
+      ],
+      "status": "open",
+      "contactInfo": "student-center@campus.edu",
+      "userId": "usr-staff-004",
+      "userEmail": "sc-info@campus.edu",
+      "createdAt": "2026-09-08T13:56:41.430163Z",
+      "updatedAt": "2026-09-08T13:56:41.430180Z"
+    },
+    {
+      "id": "item-seed-5",
+      "title": "Subaru Car Key with Red Lanyard & Gym Tag",
+      "type": "found",
+      "category": "Keys",
+      "location": "Athletic Center / Rec Gym Locker Room",
+      "dateTime": "2026-09-08T19:56:41.430196Z",
+      "description": "Set of keys with black key fob and crimson woven lanyard found on bench in men's locker room.",
+      "photoUrl": "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=600&auto=format&fit=crop&q=80",
+      "ai_tags": [
+        "Keys",
+        "Keyring",
+        "Metal",
+        "Car Key",
+        "Accessory",
+        "Lanyard"
+      ],
+      "detected_labels": [
+        {
+          "name": "Keys",
+          "confidence": 99.2
+        },
+        {
+          "name": "Keyring",
+          "confidence": 96.0
+        },
+        {
+          "name": "Car Key",
+          "confidence": 94.3
+        }
+      ],
+      "status": "open",
+      "contactInfo": "rec-desk@campus.edu",
+      "userId": "usr-staff-005",
+      "userEmail": "rec-desk@campus.edu",
+      "createdAt": "2026-09-08T19:56:41.430694Z",
+      "updatedAt": "2026-09-08T19:56:41.430722Z"
+    },
+    {
+      "id": "item-seed-6",
+      "title": "Campus Student ID Card & Metro Pass",
+      "type": "found",
+      "category": "IDs & Cards",
+      "location": "Engineering Hall East Entrance",
+      "dateTime": "2026-09-07T19:56:41.430741Z",
+      "description": "Student ID in transparent plastic sleeve found on sidewalk near bicycle racks.",
+      "photoUrl": "https://images.unsplash.com/photo-1589758438368-0ad531db3366?w=600&auto=format&fit=crop&q=80",
+      "ai_tags": [
+        "Card",
+        "Identity Card",
+        "Plastic",
+        "Document",
+        "Access Badge"
+      ],
+      "detected_labels": [
+        {
+          "name": "Card",
+          "confidence": 98.4
+        },
+        {
+          "name": "Identity Card",
+          "confidence": 96.1
+        }
+      ],
+      "status": "claimed",
+      "contactInfo": "eng-office@campus.edu",
+      "userId": "usr-staff-006",
+      "userEmail": "eng-office@campus.edu",
+      "createdAt": "2026-09-07T19:56:41.430760Z",
+      "updatedAt": "2026-09-09T01:56:41.430785Z"
+    }
+  ],
+  "alerts": [
+    {
+      "id": "alert-23f90fbd",
+      "title": "High Wind & Heavy Rain Advisory",
+      "message": "Severe weather moving across campus. Stay indoors.",
+      "severity": "warning",
+      "zone": "Campus-Wide",
+      "channels": [
+        "sms",
+        "email",
+        "in_app"
+      ],
+      "active": true,
+      "senderName": "Campus Police Dispatch",
+      "senderEmail": "security@campus.edu",
+      "snsMessageId": "sns-msg-b3708eeb61cb",
+      "broadcastStatus": "delivered",
+      "createdAt": "2026-09-16T11:25:15.486829Z"
+    },
+    {
+      "id": "alert-c78e2758",
+      "title": "Campus Power Outage Test",
+      "message": "Power interrupted in West Campus. Generators active.",
+      "severity": "warning",
+      "zone": "West Campus",
+      "channels": [
+        "sms",
+        "email",
+        "in_app"
+      ],
+      "active": true,
+      "senderName": "Campus Safety Dispatch",
+      "senderEmail": "security@campus.edu",
+      "snsMessageId": "sns-msg-4d34c9ea3d59",
+      "broadcastStatus": "delivered",
+      "createdAt": "2026-09-09T07:57:10.347524Z"
+    },
+    {
+      "id": "alert-seed-1",
+      "title": "Severe Thunderstorm & High Wind Advisory",
+      "message": "The National Weather Service has issued a severe weather warning for our county until 8:00 PM. High winds and sudden hail possible. Seek indoor shelter immediately and avoid open athletic fields.",
+      "severity": "warning",
+      "zone": "Entire Campus",
+      "channels": [
+        "sms",
+        "email",
+        "in_app"
+      ],
+      "active": true,
+      "senderName": "Campus Police Emergency Dispatch",
+      "senderEmail": "emergency@campus.edu",
+      "snsMessageId": "sns-mock-7891234",
+      "broadcastStatus": "delivered",
+      "createdAt": "2026-09-09T06:26:41.430809Z"
+    },
+    {
+      "id": "alert-seed-2",
+      "title": "Scheduled Campus Fire Drill - Science Quad",
+      "message": "Routine emergency evacuation drill in Chemistry & Biology buildings today between 2:00 PM - 3:00 PM. Please follow floor warden instructions and assemble at designated evacuation zones.",
+      "severity": "info",
+      "zone": "Science Quad",
+      "channels": [
+        "email",
+        "in_app"
+      ],
+      "active": false,
+      "senderName": "Environmental Health & Safety",
+      "senderEmail": "ehs@campus.edu",
+      "snsMessageId": "sns-mock-5544332",
+      "broadcastStatus": "delivered",
+      "createdAt": "2026-09-08T07:56:41.430830Z"
+    }
+  ],
+  "subscriptions": [
+    {
+      "id": "sub-1f9b75",
+      "endpoint": "student.john@campus.edu",
+      "protocol": "email",
+      "createdAt": "2026-09-16T11:25:17.518332Z"
+    }
+  ]
+}

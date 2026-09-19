@@ -1,0 +1,23 @@
+{
+  "name": "campusfind-project",
+  "version": "2.0.0",
+  "private": true,
+  "description": "CampusFind — Serverless Lost & Found System with Amazon Rekognition AI and Emergency Alert Broadcasting via Amazon SNS",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build && powershell -Command \"Copy-Item frontend/dist/index.html frontend/dist/404.html; Copy-Item -Recurse -Force frontend/dist/assets/* assets/; Copy-Item frontend/dist/index.html index.html; Copy-Item frontend/dist/404.html 404.html; Copy-Item -Recurse -Force frontend/dist/* docs/\"",
+    "start": "python backend/local_server.py"
+  },
+  "keywords": [
+    "aws",
+    "rekognition",
+    "sns",
+    "cognito",
+    "dynamodb",
+    "react",
+    "vite",
+    "fastapi"
+  ],
+  "author": "finditvitc",
+  "license": "MIT"
+}

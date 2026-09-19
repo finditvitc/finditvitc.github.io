@@ -1,0 +1,382 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  CampusFind - Campus Lost & Found and Emergency Alert System
+  Serverless cloud architecture with S3, Rekognition, Lambda, DynamoDB, SNS, API Gateway, and Cognito.
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Runtime: python3.12
+    Tracing: Active
+    Environment:
+      Variables:
+        ITEMS_TABLE_NAME: !Ref ItemsTable
+        ALERTS_TABLE_NAME: !Ref AlertsTable
+        PHOTOS_BUCKET_NAME: !Sub "campusfind-photos-${AWS::AccountId}-${AWS::Region}"
+        ALERT_TOPIC_ARN: !Ref EmergencyAlertsTopic
+        AWS_REGION: !Ref "AWS::Region"
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PATCH,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      AllowOrigin: "'*'"
+
+Resources:
+  # =========================================================================
+  # 1. Amazon Cognito - Student & Security Authentication
+  # =========================================================================
+  CampusFindUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: CampusFind-Students-Pool
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: true
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+        - Name: department
+          AttributeDataType: String
+          Mutable: true
+
+  CampusFindUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: CampusFind-Web-Client
+      UserPoolId: !Ref CampusFindUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      PreventUserExistenceErrors: ENABLED
+
+  # Admin / Security Group for Emergency Alerts Authorization
+  AdminSecurityGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Admin
+      Description: Campus Police and Security Dispatchers authorized to broadcast emergency alerts
+      UserPoolId: !Ref CampusFindUserPool
+      Precedence: 0
+
+  StudentGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Student
+      Description: Campus students and faculty
+      UserPoolId: !Ref CampusFindUserPool
+      Precedence: 10
+
+  # =========================================================================
+  # 2. Amazon S3 - Item Photo Storage with Lifecycle Rules (BUG-11)
+  # =========================================================================
+  PhotosBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "campusfind-photos-${AWS::AccountId}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - HEAD
+            AllowedOrigins:
+              - '*'
+            MaxAge: 3600
+      LifecycleConfiguration:
+        Rules:
+          - Id: TransitionAndExpirePhotos
+            Status: Enabled
+            Transitions:
+              - TransitionInDays: 30
+                StorageClass: STANDARD_IA
+            ExpirationInDays: 90
+
+  # =========================================================================
+  # 3. Amazon DynamoDB Tables
+  # =========================================================================
+  ItemsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CampusFind-Items
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: type
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: TypeCreatedAtIndex
+          KeySchema:
+            - AttributeName: type
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  AlertsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CampusFind-Alerts
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  # =========================================================================
+  # 4. Amazon SNS - Emergency Alert Notification System
+  # =========================================================================
+  EmergencyAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: CampusFind-EmergencyAlerts
+      DisplayName: Campus Emergency Alerts
+
+  # =========================================================================
+  # 5. Amazon API Gateway with Cognito Authorizer (BUG-01)
+  # =========================================================================
+  CampusFindApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Headers: "'*'"
+        DEFAULT_5XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Headers: "'*'"
+      Auth:
+        DefaultAuthorizer: CognitoAuth
+        AddDefaultAuthorizerToCorsPreflight: false
+        Authorizers:
+          CognitoAuth:
+            UserPoolArn: !GetAtt CampusFindUserPool.Arn
+            Identity:
+              Header: Authorization
+
+  # =========================================================================
+  # 6. AWS Lambda Functions with 14-Day Log Retentions (BUG-11, BUG-14)
+  # =========================================================================
+
+  ItemsFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ItemsFunction}"
+      RetentionInDays: 14
+
+  RekognitionTriggerFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${RekognitionTriggerFunction}"
+      RetentionInDays: 14
+
+  AlertsFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AlertsFunction}"
+      RetentionInDays: 14
+
+  UploadPresignFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${UploadPresignFunction}"
+      RetentionInDays: 14
+
+  # Items CRUD & Search & Matches API Function
+  ItemsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/lambda/
+      Handler: items.lambda_handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ItemsTable
+      Events:
+        GetItems:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CampusFindApi
+            Path: /items
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        CreateItem:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CampusFindApi
+            Path: /items
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuth
+        GetItem:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CampusFindApi
+            Path: /items/{id}
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        UpdateItem:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CampusFindApi
+            Path: /items/{id}
+            Method: PATCH
+            Auth:
+              Authorizer: CognitoAuth
+        DeleteItem:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CampusFindApi
+            Path: /items/{id}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuth
+        GetMatches:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CampusFindApi
+            Path: /items/{id}/matches
+            Method: GET
+            Auth:
+              Authorizer: NONE
+
+  # S3 Photo Rekognition Auto-Tagger Function (BUG-14: Scoped least privilege)
+  RekognitionTriggerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/lambda/
+      Handler: rekognition_processor.lambda_handler
+      Policies:
+        - RekognitionDetectOnlyPolicy: {}
+        - S3ReadPolicy:
+            BucketName: !Sub "campusfind-photos-${AWS::AccountId}-${AWS::Region}"
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ItemsTable
+      Events:
+        S3PhotoUpload:
+          Type: S3
+          Properties:
+            Bucket: !Ref PhotosBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: items/
+
+  # Emergency Alerts Broadcast Function
+  AlertsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/lambda/
+      Handler: alerts.lambda_handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AlertsTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt EmergencyAlertsTopic.TopicName
+        - Statement:
+            - Effect: Allow
+              Action:
+                - sns:Subscribe
+                - sns:Unsubscribe
+              Resource: !Ref EmergencyAlertsTopic
+      Events:
+        GetAlerts:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CampusFindApi
+            Path: /alerts
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        CreateAlert:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CampusFindApi
+            Path: /alerts
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuth
+        SubscribeAlert:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CampusFindApi
+            Path: /alerts/subscribe
+            Method: POST
+            Auth:
+              Authorizer: NONE
+
+  # S3 Upload Presign Function
+  UploadPresignFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../backend/lambda/
+      Handler: uploads.lambda_handler
+      Policies:
+        - S3WritePolicy:
+            BucketName: !Sub "campusfind-photos-${AWS::AccountId}-${AWS::Region}"
+      Events:
+        PresignUpload:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CampusFindApi
+            Path: /uploads/presign
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuth
+
+Outputs:
+  ApiEndpoint:
+    Description: "API Gateway Base URL for CampusFind Frontend"
+    Value: !Sub "https://${CampusFindApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+  UserPoolId:
+    Description: "Cognito User Pool ID"
+    Value: !Ref CampusFindUserPool
+  UserPoolClientId:
+    Description: "Cognito App Client ID"
+    Value: !Ref CampusFindUserPoolClient
+  PhotosBucketName:
+    Description: "S3 Photos Bucket Name"
+    Value: !Ref PhotosBucket
+  EmergencyTopicArn:
+    Description: "SNS Emergency Alerts Topic ARN"
+    Value: !Ref EmergencyAlertsTopic
