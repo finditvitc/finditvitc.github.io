@@ -1,1 +1,0 @@
-# CampusFind Lambda Package
