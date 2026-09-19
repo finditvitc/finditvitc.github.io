@@ -124,10 +124,20 @@ export const api = {
   },
 
   async updateItemStatus(id, status) {
+    let sessionUser = null;
+    try {
+      const userStr = sessionStorage.getItem('findit_session_user');
+      if (userStr) sessionUser = JSON.parse(userStr);
+    } catch (_) {}
+
     try {
       const res = await request(`${PREFIX}/items/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({
+          status,
+          userId: sessionUser?.id,
+          userEmail: sessionUser?.email
+        }),
       });
       if (res && res.item) {
         clientStore.updateItemStatus(id, status, res.item);
