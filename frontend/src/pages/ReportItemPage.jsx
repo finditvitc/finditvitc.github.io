@@ -63,7 +63,7 @@ const CAMPUS_LOCATIONS = [
 ];
 
 // Instant client-side semantic & visual tag extractor
-const extractClientTags = (fileName = '', itemTitle = '', itemCategory = '', itemDesc = '') => {
+const extractClientTags = (fileName = '', itemTitle = '', itemCategory = '', itemDesc = '', pixelColor = null) => {
   const text = `${fileName} ${itemTitle} ${itemCategory} ${itemDesc}`.toLowerCase();
   const tags = new Set();
   
@@ -71,7 +71,7 @@ const extractClientTags = (fileName = '', itemTitle = '', itemCategory = '', ite
 
   const RULES = [
     { kws: ['calculator', 'ti-84', 'scientific', 'texas instruments', 'casio'], tags: ['Calculator', 'Electronics', 'Device'] },
-    { kws: ['earbuds', 'airpods', 'headphones', 'jbl', 'earphone', 'headset', 'galaxy buds', 'audio'], tags: ['Headphones', 'Earphone', 'Audio', 'Electronics', 'Accessory'] },
+    { kws: ['earbuds', 'airpods', 'headphones', 'jbl', 'earphone', 'headset', 'galaxy buds', 'audio', 'boat'], tags: ['Headphones', 'Earphone', 'Audio', 'Electronics', 'Accessory'] },
     { kws: ['laptop', 'macbook', 'notebook', 'computer', 'dell', 'thinkpad', 'chromebook', 'asus', 'hp'], tags: ['Laptop', 'Computer', 'Electronics', 'Screen', 'Keyboard'] },
     { kws: ['phone', 'iphone', 'smartphone', 'samsung', 'pixel', 'android', 'mobile'], tags: ['Mobile Phone', 'Phone', 'Electronics', 'Touchscreen'] },
     { kws: ['charger', 'cable', 'adapter', 'usb', 'lightning', 'magsafe', 'power bank'], tags: ['Adapter', 'Cable', 'Electronics', 'Hardware'] },
@@ -91,13 +91,15 @@ const extractClientTags = (fileName = '', itemTitle = '', itemCategory = '', ite
     }
   }
 
-  const COLORS = ['pink', 'blue', 'black', 'white', 'red', 'green', 'yellow', 'purple', 'silver', 'gold', 'gray', 'grey', 'orange', 'brown'];
+  const COLORS = ['teal', 'cyan', 'pink', 'blue', 'navy', 'black', 'white', 'red', 'green', 'yellow', 'purple', 'silver', 'gold', 'gray', 'grey', 'orange', 'brown'];
   const objectTags = Array.from(tags).filter(t => !COLORS.map(c => c.toLowerCase()).includes(t.toLowerCase()));
-  let detectedColor = null;
-  for (const c of COLORS) {
-    if (text.includes(c.toLowerCase())) {
-      detectedColor = c.charAt(0).toUpperCase() + c.slice(1).replace('Grey', 'Gray');
-      break;
+  let detectedColor = pixelColor || null;
+  if (!detectedColor) {
+    for (const c of COLORS) {
+      if (text.includes(c.toLowerCase())) {
+        detectedColor = c.charAt(0).toUpperCase() + c.slice(1).replace('Grey', 'Gray');
+        break;
+      }
     }
   }
 
@@ -110,6 +112,7 @@ const extractClientTags = (fileName = '', itemTitle = '', itemCategory = '', ite
 
   return finalTags.slice(0, 5);
 };
+
 
 export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
   const { currentUser } = useAuth();
@@ -159,15 +162,17 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
 
     // 1. Immediately compress image on client canvas to crisp ~25KB JPEG
     let dataUrl = customDataUrl;
+    let canvasColor = null;
     if (!dataUrl) {
       const compressed = await compressImageFile(file, 640, 0.72);
       dataUrl = compressed.dataUrl;
+      canvasColor = compressed.dominantColor;
     }
     setPhotoDataUrl(dataUrl);
     setPhotoPreview(dataUrl);
 
     // 2. Instant client-side preview and immediate tag extraction (0ms latency)
-    const immediateTags = extractClientTags(file.name || 'photo.jpg', title, category, description);
+    const immediateTags = extractClientTags(file.name || 'photo.jpg', title, category, description, canvasColor);
     if (immediateTags.length > 0) {
       setAiTags(immediateTags.slice(0, 5));
       setDetectedLabels(immediateTags.slice(0, 5).map(t => ({ name: t, confidence: 95.0 })));

@@ -85,51 +85,60 @@ def normalize_image_and_extract_colors(image_bytes: bytes) -> Tuple[bytes, List[
         elif img.mode != 'RGB':
             img = img.convert('RGB')
 
-        # 2. Extract Dominant Non-White Colors
+        # 2. Extract Dominant Subject Colors using Saturation-Weighted Histogram
         try:
             sample = img.copy().resize((80, 80))
-            colors = sample.getcolors(6400)
-            if colors:
-                colors.sort(key=lambda x: x[0], reverse=True)
-                for count, (r, g, b) in colors:
-                    # Ignore pure white / bright background
-                    if r > 235 and g > 235 and b > 235:
-                        continue
-                    if count < 50:
-                        continue
-                        
-                    h, s, v = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
-                    color_name = None
-                    if s < 0.15:
-                        if v < 0.22:
-                            color_name = 'Black'
-                        elif v > 0.78:
-                            color_name = 'White'
-                        else:
-                            color_name = 'Gray'
+            pixels = sample.getdata()
+            color_scores = {}
+            
+            for p in pixels:
+                r, g, b = p[0], p[1], p[2]
+                # Skip pure white/bright background
+                if r > 240 and g > 240 and b > 240:
+                    continue
+                    
+                h, s, v = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
+                
+                # Neutral classifications (Black, White, Gray)
+                if s < 0.18:
+                    if v < 0.25:
+                        c_name = 'Black'
+                        score = 0.4
+                    elif v > 0.85:
+                        c_name = 'White'
+                        score = 0.2
                     else:
-                        deg = h * 360
-                        if deg < 15 or deg >= 345:
-                            color_name = 'Red'
-                        elif deg < 42:
-                            color_name = 'Orange'
-                        elif deg < 70:
-                            color_name = 'Yellow'
-                        elif deg < 165:
-                            color_name = 'Green'
-                        elif deg < 200:
-                            color_name = 'Cyan'
-                        elif deg < 260:
-                            color_name = 'Blue'
-                        elif deg < 295:
-                            color_name = 'Purple'
-                        elif deg < 345:
-                            color_name = 'Pink'
-
-                    if color_name and color_name not in dominant_colors:
-                        dominant_colors.append(color_name)
-                        if len(dominant_colors) >= 2:
-                            break
+                        c_name = 'Gray'
+                        score = 0.3
+                else:
+                    # Chromatic classifications with high saturation multiplier
+                    deg = h * 360.0
+                    score = s * (1.2 + v) * 2.0
+                    if deg < 15 or deg >= 345:
+                        c_name = 'Red'
+                    elif deg < 42:
+                        c_name = 'Orange'
+                    elif deg < 68:
+                        c_name = 'Yellow'
+                    elif deg < 165:
+                        c_name = 'Green'
+                    elif deg < 195:
+                        c_name = 'Teal' if s > 0.25 else 'Cyan'
+                    elif deg < 260:
+                        c_name = 'Navy Blue' if v < 0.4 else 'Blue'
+                    elif deg < 295:
+                        c_name = 'Purple'
+                    elif deg < 345:
+                        c_name = 'Pink'
+                    else:
+                        c_name = 'Red'
+                        
+                color_scores[c_name] = color_scores.get(c_name, 0.0) + score
+                
+            # Rank dominant colors
+            if color_scores:
+                sorted_cols = sorted(color_scores.items(), key=lambda x: x[1], reverse=True)
+                dominant_colors = [col for col, score in sorted_cols[:2] if score > 5.0]
         except Exception as col_err:
             logger.debug(f"Color extraction non-fatal error: {col_err}")
 
@@ -311,7 +320,7 @@ def analyze_image_bytes(image_bytes: bytes, filename_hint: str = "", category_hi
     seen = set()
 
     # Color keywords set
-    COLOR_NAMES = {'black', 'white', 'gray', 'grey', 'pink', 'blue', 'navy', 'navy blue', 'red', 'green', 'yellow', 'purple', 'silver', 'gold', 'brown', 'orange', 'cyan', 'magenta'}
+    COLOR_NAMES = {'black', 'white', 'gray', 'grey', 'pink', 'blue', 'navy', 'navy blue', 'red', 'green', 'yellow', 'purple', 'silver', 'gold', 'brown', 'orange', 'cyan', 'magenta', 'teal'}
 
     # Step 2: Try Amazon Rekognition DetectLabels with IMAGE_PROPERTIES
     client = get_rekognition_client()
