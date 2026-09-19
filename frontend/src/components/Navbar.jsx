@@ -119,11 +119,9 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenArchitecture }) => {
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                 className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800/90 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs text-left"
               >
-                <img
-                  src={currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
-                  alt={currentUser?.name}
-                  className="w-7 h-7 rounded-lg object-cover ring-2 ring-slate-100 dark:ring-slate-700"
-                />
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-xs ring-2 ring-blue-500/20 shrink-0">
+                  {(currentUser?.email?.[0] || currentUser?.name?.[0] || 'U').toUpperCase()}
+                </div>
                 <div className="hidden sm:block">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[110px]">

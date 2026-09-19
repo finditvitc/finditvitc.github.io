@@ -20,10 +20,10 @@ export const ItemDetailsModal = ({ item, isOpen, onClose, onSelectMatches, onUpd
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
         {/* Modal Header */}
         <div className="relative">
-          <div className="h-64 sm:h-72 w-full bg-slate-100 overflow-hidden relative">
+          <div className="h-64 sm:h-72 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden relative">
             <img
               src={getImageUrl(item.photoUrl, item.category)}
               alt={item.title}
@@ -83,7 +83,7 @@ export const ItemDetailsModal = ({ item, isOpen, onClose, onSelectMatches, onUpd
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
               Description & Specific Details
             </h4>
-            <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/70 p-3.5 rounded-xl border border-slate-100 dark:border-slate-700">
               {item.description || 'No additional details provided.'}
             </p>
           </div>
@@ -92,8 +92,8 @@ export const ItemDetailsModal = ({ item, isOpen, onClose, onSelectMatches, onUpd
           <div>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-blue-600" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Amazon Rekognition Vision Labels
                 </h4>
               </div>
@@ -107,33 +107,33 @@ export const ItemDetailsModal = ({ item, isOpen, onClose, onSelectMatches, onUpd
                 item.ai_tags.map((tag, idx) => (
                   <span
                     key={idx}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800"
                   >
-                    <Tag className="w-3 h-3 text-blue-500" />
+                    <Tag className="w-3 h-3 text-blue-500 dark:text-blue-400" />
                     {tag}
                   </span>
                 ))
               ) : (
-                <span className="text-xs text-slate-400 italic">No AI tags extracted.</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500 italic">No AI tags extracted.</span>
               )}
             </div>
           </div>
 
           {/* Contact / Custody Info */}
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex items-start gap-3">
             <Mail className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
             <div className="text-xs">
-              <span className="font-semibold text-slate-800">
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
                 {isLost ? "Owner's Campus Contact" : "Item Drop-off Location / Custody"}:
               </span>
-              <p className="text-slate-600 mt-0.5">
+              <p className="text-slate-600 dark:text-slate-400 mt-0.5">
                 {item.contactInfo || item.userEmail || "Campus Police Lost & Found Office"}
               </p>
             </div>
           </div>
 
           {/* Status & Actions */}
-          <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500 font-medium">Report Status:</span>
               <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded-md ${

@@ -389,26 +389,26 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-      <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/50 shadow-md p-6 sm:p-8 space-y-6">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md p-6 sm:p-8 space-y-6">
         {/* Header */}
-        <div className="border-b border-outline-variant/30 pb-5">
+        <div className="border-b border-slate-100 dark:border-slate-800 pb-5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-headline font-black text-on-surface">
+              <h1 className="text-xl sm:text-2xl font-headline font-black text-slate-900 dark:text-white">
                 {isLost ? 'Report a Lost Item' : 'Report a Found Item'}
               </h1>
-              <p className="text-xs text-outline mt-1 font-body">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-body">
                 Fill in the details below. FindIt VITC AWS Rekognition vision model will auto-tag your photo for AI matching.
               </p>
             </div>
 
             {/* Type toggle */}
-            <div className="flex items-center p-1 rounded-xl bg-surface-container border border-outline-variant/40">
+            <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => setType('lost')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-headline font-bold transition ${
-                  isLost ? 'bg-lost-coral text-white shadow-xs' : 'text-on-surface-variant hover:text-on-surface'
+                  isLost ? 'bg-lost-coral text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Lost
@@ -417,7 +417,7 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
                 type="button"
                 onClick={() => setType('found')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-headline font-bold transition ${
-                  !isLost ? 'bg-found-emerald text-white shadow-xs' : 'text-on-surface-variant hover:text-on-surface'
+                  !isLost ? 'bg-found-emerald text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Found
@@ -427,7 +427,7 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
         </div>
 
         {error && (
-          <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+          <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -437,10 +437,10 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
           {/* Title */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-headline font-bold uppercase tracking-wider text-on-surface">
+              <label className="block text-xs font-headline font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Item Title / Name *
               </label>
-              <span className={`text-[10px] font-medium ${title.length > 90 ? 'text-amber-600 font-bold' : 'text-outline'}`}>
+              <span className={`text-[10px] font-medium ${title.length > 90 ? 'text-amber-600 font-bold' : 'text-slate-400'}`}>
                 {title.length}/100
               </span>
             </div>
@@ -451,20 +451,20 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Space Gray MacBook Air, Navy Kånken Backpack, Subaru Car Key"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-xs sm:text-sm outline-none transition"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs sm:text-sm outline-none transition"
             />
           </div>
 
           {/* Category & Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Category *
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-xs sm:text-sm outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 transition"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs sm:text-sm outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 transition"
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">{cat}</option>
@@ -473,7 +473,7 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Date & Time {isLost ? 'Last Seen' : 'Found'} *
               </label>
               <input
@@ -482,7 +482,7 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
                 max={getLocalISOString()}
                 value={dateTime}
                 onChange={(e) => setDateTime(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-xs sm:text-sm outline-none transition"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs sm:text-sm outline-none transition"
               />
               <p className="text-[10px] text-slate-400 mt-1">
                 Cannot be in the future.
@@ -492,13 +492,13 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
 
           {/* Location */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Campus Location *
             </label>
             <select
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-xs sm:text-sm outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 transition"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs sm:text-sm outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 transition"
             >
               {CAMPUS_LOCATIONS.map((loc) => (
                 <option key={loc} value={loc} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">{loc}</option>
@@ -510,14 +510,14 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
               value={customLocation}
               onChange={(e) => setCustomLocation(e.target.value)}
               placeholder="Or specify exact room/area (e.g. '3rd floor study carrel #14')"
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:border-blue-500 outline-none"
+              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs focus:border-blue-500 outline-none"
             />
           </div>
 
           {/* Description */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Detailed Description & Distinguishing Features
               </label>
               <span className={`text-[10px] font-medium ${description.length > 900 ? 'text-amber-600 font-bold' : 'text-slate-400'}`}>
@@ -530,19 +530,18 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Mention distinctive stickers, scratches, colors, contents, brand names, or specific markings..."
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-xs sm:text-sm outline-none transition resize-none"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs sm:text-sm outline-none transition resize-none"
             />
           </div>
 
           {/* Photo Upload with Amazon Rekognition AI Auto-Tagging */}
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+          <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
-
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                   Item Photo & Amazon Rekognition Vision Auto-Tagging
                 </span>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Upload an image to auto-detect objects, labels, and colors for AI match calculation.
                 </p>
               </div>
@@ -550,20 +549,19 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
                 <button
                   type="button"
                   onClick={handleAutoExtractTags}
-                  className="flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 px-2.5 py-1 rounded-lg transition"
+                  className="flex items-center gap-1 text-[11px] font-semibold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-900/60 px-2.5 py-1 rounded-lg transition"
                   title="Run Amazon Rekognition extraction on current details"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                  <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Auto-Extract Tags</span>
                 </button>
               </div>
             </div>
 
-
             {/* Upload Box */}
             <div className="flex flex-col sm:flex-row items-center gap-4">
               {photoPreview ? (
-                <div className="w-32 h-32 rounded-xl overflow-hidden relative border border-slate-300 shrink-0">
+                <div className="w-32 h-32 rounded-xl overflow-hidden relative border border-slate-300 dark:border-slate-600 shrink-0">
                   <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
                   <button
                     type="button"
@@ -579,10 +577,10 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
                   </button>
                 </div>
               ) : (
-                <label className="w-full sm:w-48 h-32 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-500 bg-white hover:bg-blue-50/40 flex flex-col items-center justify-center gap-2 cursor-pointer transition p-4 text-center">
-                  <UploadCloud className="w-6 h-6 text-slate-400" />
-                  <span className="text-xs font-semibold text-slate-700">Upload Photo</span>
-                  <span className="text-[10px] text-slate-400">PNG, JPG up to 10MB</span>
+                <label className="w-full sm:w-48 h-32 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 bg-white dark:bg-slate-800 hover:bg-blue-50/40 dark:hover:bg-slate-750 flex flex-col items-center justify-center gap-2 cursor-pointer transition p-4 text-center">
+                  <UploadCloud className="w-6 h-6 text-slate-400 dark:text-slate-500" />
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Upload Photo</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500">PNG, JPG up to 10MB</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -594,22 +592,22 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
 
               <div className="flex-1 space-y-2 w-full">
                 {analyzingPhoto ? (
-                  <div className="flex items-center gap-2 text-xs text-blue-600 font-semibold p-3 bg-blue-50/80 rounded-xl border border-blue-200">
-                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
+                  <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-semibold p-3 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <div className="w-4 h-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin shrink-0" />
                     <span>Analyzing image with Amazon Rekognition DetectLabels...</span>
                   </div>
                 ) : aiTags.length > 0 ? (
                   <div className="space-y-1.5">
-                    <span className="text-[11px] font-bold text-slate-600">
+                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
                       Auto-Detected AI Labels (used for matching):
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       {aiTags.map((tag, idx) => (
                         <span
                           key={idx}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white border border-blue-200 text-blue-700 shadow-2xs"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 shadow-2xs"
                         >
-                          <Tag className="w-3 h-3 text-blue-500" />
+                          <Tag className="w-3 h-3 text-blue-500 dark:text-blue-400" />
                           {tag}
                           <button
                             type="button"
@@ -623,7 +621,7 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400 italic">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 italic">
                     Upload a photo to see Amazon Rekognition automatically extract tags. Or add custom tags below.
                   </p>
                 )}
@@ -635,12 +633,12 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
                     value={newTagInput}
                     onChange={(e) => setNewTagInput(e.target.value)}
                     placeholder="Add custom tag (e.g. 'Blue', 'Sticker')..."
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs outline-none focus:border-blue-500 flex-1 bg-white"
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs outline-none focus:border-blue-500 flex-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                   <button
                     type="button"
                     onClick={handleAddCustomTag}
-                    className="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold transition"
+                    className="px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold transition"
                   >
                     Add Tag
                   </button>
@@ -651,7 +649,7 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
 
           {/* Contact / Custody Drop-off */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
               {isLost ? 'Your Contact Email / Phone' : 'Where is the item currently held?'} *
             </label>
             <input
@@ -660,7 +658,7 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
               value={contactInfo}
               onChange={(e) => setContactInfo(e.target.value)}
               placeholder={isLost ? "your.name2023@vitstudent.ac.in or 9876543210" : "Turned in at Library Front Desk Lost & Found bin"}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-xs sm:text-sm outline-none transition"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs sm:text-sm outline-none transition"
             />
           </div>
 

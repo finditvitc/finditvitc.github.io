@@ -135,17 +135,17 @@ export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feed
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-surface-container-lowest rounded-2xl p-4 sm:p-5 border border-outline-variant/50 shadow-xs space-y-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
         {/* Search Bar + Tabs */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           {/* Lost / Found / All Tabs */}
-          <div className="flex items-center p-1 rounded-xl bg-surface-container border border-outline-variant/40 self-start">
+          <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 self-start">
             <button
               onClick={() => setActiveTab('all')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-headline font-bold transition ${
                 activeTab === 'all'
-                  ? 'bg-surface-container-lowest text-on-surface shadow-xs'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               All Items ({items.length})
@@ -155,7 +155,7 @@ export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feed
               className={`px-3.5 py-1.5 rounded-lg text-xs font-headline font-bold transition flex items-center gap-1.5 ${
                 activeTab === 'lost'
                   ? 'bg-lost-coral text-white shadow-xs'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-red-200" />
@@ -166,7 +166,7 @@ export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feed
               className={`px-3.5 py-1.5 rounded-lg text-xs font-headline font-bold transition flex items-center gap-1.5 ${
                 activeTab === 'found'
                   ? 'bg-found-emerald text-white shadow-xs'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-emerald-200" />
@@ -176,17 +176,17 @@ export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feed
 
           {/* Search Input */}
           <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md relative">
-            <Search className="w-4 h-4 text-outline absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-3" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search reports, keywords, or Rekognition labels..."
-              className="w-full pl-9 pr-20 py-2 rounded-xl border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary-fixed text-xs font-body outline-none transition bg-surface-container-lowest"
+              className="w-full pl-9 pr-20 py-2 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs font-body outline-none transition bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
             <button
               type="submit"
-              className="absolute right-1.5 top-1.5 px-3 py-1 bg-on-surface hover:bg-slate-800 text-white text-[11px] font-headline font-semibold rounded-lg transition"
+              className="absolute right-1.5 top-1.5 px-3 py-1 bg-slate-900 dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-500 text-white text-[11px] font-headline font-semibold rounded-lg transition shadow-xs"
             >
               Search
             </button>
@@ -195,7 +195,7 @@ export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feed
           {/* Refresh button */}
           <button
             onClick={loadItems}
-            className="p-2 rounded-xl border border-outline-variant/60 hover:bg-surface-container text-on-surface-variant transition shrink-0"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition shrink-0"
             title="Refresh Feed"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -203,10 +203,10 @@ export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feed
         </div>
 
         {/* Filter Dropdowns & Category Pills */}
-        <div className="pt-3 border-t border-outline-variant/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           {/* Categories */}
           <div className="flex items-center gap-1.5 overflow-x-auto w-full pb-1 sm:pb-0 scrollbar-none">
-            <span className="text-[11px] font-headline font-bold uppercase tracking-wider text-outline mr-1 shrink-0">
+            <span className="text-[11px] font-headline font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 mr-1 shrink-0">
               Category:
             </span>
             {CATEGORIES.map((cat) => (
@@ -215,8 +215,8 @@ export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feed
                 onClick={() => setCategory(cat)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0 transition ${
                   category === cat
-                    ? 'bg-primary text-white shadow-xs'
-                    : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant border border-outline-variant/40'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
                 }`}
               >
                 {cat}
@@ -231,9 +231,9 @@ export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feed
               onChange={(e) => setLocation(e.target.value)}
               className="text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-800 dark:text-slate-100 font-medium outline-none transition"
             >
-              <option value="All" className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">All Locations</option>
+              <option value="All">All Locations</option>
               {LOCATIONS.filter(l => l !== 'All').map(loc => (
-                <option key={loc} value={loc} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">{loc}</option>
+                <option key={loc} value={loc}>{loc}</option>
               ))}
             </select>
 
@@ -242,10 +242,10 @@ export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feed
               onChange={(e) => setStatusFilter(e.target.value)}
               className="text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-800 dark:text-slate-100 font-medium outline-none transition"
             >
-              <option value="all" className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">All Statuses</option>
-              <option value="open" className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Open Reports</option>
-              <option value="claimed" className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Claimed</option>
-              <option value="resolved" className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">Resolved</option>
+              <option value="all">All Statuses</option>
+              <option value="open">Open Reports</option>
+              <option value="claimed">Claimed</option>
+              <option value="resolved">Resolved</option>
             </select>
           </div>
         </div>
