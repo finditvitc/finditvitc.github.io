@@ -201,12 +201,38 @@ export const clientStore = {
     return { message: 'Report created successfully', item: newItem };
   },
 
-  updateItemStatus(id, status) {
+  saveRemoteItems(remoteItems = []) {
+    if (!Array.isArray(remoteItems)) return;
     const db = getLocalData();
-    const item = db.items.find(i => i.id === id);
-    if (!item) throw new Error('Item not found');
-    item.status = status.toLowerCase();
-    item.updatedAt = new Date().toISOString();
+    const map = new Map();
+    for (const it of db.items) {
+      if (it && it.id) map.set(it.id, it);
+    }
+    for (const it of remoteItems) {
+      if (it && it.id) map.set(it.id, it);
+    }
+    db.items = Array.from(map.values());
+    saveLocalData(db);
+  },
+
+  updateItemStatus(id, status, remoteItem = null) {
+    const db = getLocalData();
+    let item = db.items.find(i => i.id === id);
+    if (!item) {
+      if (remoteItem) {
+        item = { ...remoteItem, status: status.toLowerCase(), updatedAt: new Date().toISOString() };
+        db.items.unshift(item);
+      } else {
+        item = { id, status: status.toLowerCase(), updatedAt: new Date().toISOString() };
+        db.items.unshift(item);
+      }
+    } else {
+      item.status = status.toLowerCase();
+      item.updatedAt = new Date().toISOString();
+      if (remoteItem) {
+        Object.assign(item, remoteItem);
+      }
+    }
     saveLocalData(db);
     return { message: 'Status updated', item };
   },

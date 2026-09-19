@@ -62,6 +62,7 @@ export const api = {
       if (res && Array.isArray(res.items)) {
         remoteItems = res.items;
         remoteSuccess = true;
+        clientStore.saveRemoteItems(remoteItems);
       }
     } catch (err) {
       console.warn('API getItems notice, falling back to local resilient store:', err.message);
@@ -123,14 +124,24 @@ export const api = {
   },
 
   async updateItemStatus(id, status) {
-    clientStore.updateItemStatus(id, status);
     try {
-      return await request(`${PREFIX}/items/${id}`, {
+      const res = await request(`${PREFIX}/items/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       });
-    } catch {
-      return clientStore.getItem(id);
+      if (res && res.item) {
+        clientStore.updateItemStatus(id, status, res.item);
+        return res;
+      }
+      return clientStore.updateItemStatus(id, status);
+    } catch (err) {
+      if (err.status === 403 || err.message?.toLowerCase().includes('permission') || err.message?.toLowerCase().includes('forbidden')) {
+        throw new Error('Permission denied: Only the student who reported this item or a campus administrator can update its status.');
+      }
+      if (err.status === 404) {
+        throw new Error('Report not found on the server.');
+      }
+      return clientStore.updateItemStatus(id, status);
     }
   },
 

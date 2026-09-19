@@ -12,11 +12,20 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { getCategoryFallbackImage, getImageUrl } from '../utils/imageFallbacks';
+import { useAuth } from '../context/AuthContext';
 
 export const ItemDetailsModal = ({ item, isOpen, onClose, onSelectMatches, onUpdateStatus }) => {
+  const { currentUser } = useAuth();
   if (!isOpen || !item) return null;
 
   const isLost = item.type === 'lost';
+  const isOwnerOrAdmin = Boolean(
+    currentUser && (
+      currentUser.role === 'admin' ||
+      (currentUser.email && item.userEmail && currentUser.email.toLowerCase() === item.userEmail.toLowerCase()) ||
+      (currentUser.id && item.userId && currentUser.id === item.userId)
+    )
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
@@ -159,7 +168,7 @@ export const ItemDetailsModal = ({ item, isOpen, onClose, onSelectMatches, onUpd
                 <span>View AI Matches</span>
               </button>
 
-              {onUpdateStatus && (
+              {onUpdateStatus && isOwnerOrAdmin && (
                 <>
                   {item.status === 'open' && (
                     <button
@@ -180,7 +189,7 @@ export const ItemDetailsModal = ({ item, isOpen, onClose, onSelectMatches, onUpd
                       </button>
                       <button
                         onClick={() => onUpdateStatus(item.id, 'open')}
-                        className="flex-1 sm:flex-none px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition"
+                        className="flex-1 sm:flex-none px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition"
                       >
                         Reopen Report
                       </button>
@@ -190,7 +199,7 @@ export const ItemDetailsModal = ({ item, isOpen, onClose, onSelectMatches, onUpd
                   {item.status === 'resolved' && (
                     <button
                       onClick={() => onUpdateStatus(item.id, 'open')}
-                      className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition"
+                      className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition"
                     >
                       Reopen Report
                     </button>
