@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Camera, 
   UploadCloud, 
@@ -11,7 +11,9 @@ import {
   Plus,
   X,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  RefreshCw,
+  SwitchCamera
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -90,23 +92,23 @@ const extractClientTags = (fileName = '', itemTitle = '', itemCategory = '', ite
   }
 
   const COLORS = ['pink', 'blue', 'black', 'white', 'red', 'green', 'yellow', 'purple', 'silver', 'gold', 'gray', 'grey', 'orange', 'brown'];
-    const objectTags = Array.from(tags).filter(t => !COLORS.map(c => c.toLowerCase()).includes(t.toLowerCase()));
-    let detectedColor = null;
-    for (const c of COLORS) {
-      if (text.includes(c.toLowerCase())) {
-        detectedColor = c.charAt(0).toUpperCase() + c.slice(1).replace('Grey', 'Gray');
-        break;
-      }
+  const objectTags = Array.from(tags).filter(t => !COLORS.map(c => c.toLowerCase()).includes(t.toLowerCase()));
+  let detectedColor = null;
+  for (const c of COLORS) {
+    if (text.includes(c.toLowerCase())) {
+      detectedColor = c.charAt(0).toUpperCase() + c.slice(1).replace('Grey', 'Gray');
+      break;
     }
+  }
 
-    const finalTags = objectTags.slice(0, 4);
-    if (detectedColor && !finalTags.includes(detectedColor)) {
-      finalTags.push(detectedColor);
-    } else if (objectTags.length > 4) {
-      finalTags.push(objectTags[4]);
-    }
+  const finalTags = objectTags.slice(0, 4);
+  if (detectedColor && !finalTags.includes(detectedColor)) {
+    finalTags.push(detectedColor);
+  } else if (objectTags.length > 4) {
+    finalTags.push(objectTags[4]);
+  }
 
-    return finalTags.slice(0, 5);
+  return finalTags.slice(0, 5);
 };
 
 export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
@@ -131,27 +133,41 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
   const [detectedLabels, setDetectedLabels] = useState([]);
   const [newTagInput, setNewTagInput] = useState('');
 
+  // Camera Modal States
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState('environment'); // 'environment' or 'user'
+  const [cameraError, setCameraError] = useState('');
+  const [cameraSnapshot, setCameraSnapshot] = useState(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [createdItem, setCreatedItem] = useState(null);
 
   const isLost = type === 'lost';
 
-  const handlePhotoSelect = async (e) => {
-    const file = e.target.files?.[0];
+  // Process selected or captured image
+  const processImage = async (file, customDataUrl = null) => {
     if (!file) return;
 
     setPhotoFile(file);
     setError('');
 
-    // 1. Immediately compress image on client canvas to crisp ~25KB JPEG (never exceeds DynamoDB 400KB limit, 0ms render latency)
-    const compressed = await compressImageFile(file, 640, 0.72);
-    const dataUrl = compressed.dataUrl;
+    // 1. Immediately compress image on client canvas to crisp ~25KB JPEG
+    let dataUrl = customDataUrl;
+    if (!dataUrl) {
+      const compressed = await compressImageFile(file, 640, 0.72);
+      dataUrl = compressed.dataUrl;
+    }
     setPhotoDataUrl(dataUrl);
     setPhotoPreview(dataUrl);
 
     // 2. Instant client-side preview and immediate tag extraction (0ms latency)
-    const immediateTags = extractClientTags(file.name, title, category, description);
+    const immediateTags = extractClientTags(file.name || 'photo.jpg', title, category, description);
     if (immediateTags.length > 0) {
       setAiTags(immediateTags.slice(0, 5));
       setDetectedLabels(immediateTags.slice(0, 5).map(t => ({ name: t, confidence: 95.0 })));
@@ -161,7 +177,7 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
 
     try {
       // 3. Call live Amazon Rekognition vision detection in AWS Cloud
-      const result = await api.uploadPhoto(file, title || file.name, category, dataUrl);
+      const result = await api.uploadPhoto(file, title || file.name || 'item_photo', category, dataUrl);
       if (result && result.photoUrl) {
         setUploadedUrl(result.photoUrl);
       }
@@ -183,6 +199,118 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
       setAnalyzingPhoto(false);
     }
   };
+
+  const handlePhotoSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await processImage(file);
+    }
+  };
+
+  // Start Live Camera Stream
+  const startCamera = async (facing = cameraFacing) => {
+    setCameraError('');
+    setCameraSnapshot(null);
+    stopCamera();
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera stream not supported on this browser. Opening device camera app...');
+      }
+
+      const constraints = {
+        video: {
+          facingMode: facing,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+    } catch (err) {
+      console.warn('Camera stream error:', err);
+      // Fallback to native mobile camera file input if getUserMedia fails
+      setCameraError(err.message || 'Unable to access camera. Use device camera option.');
+      setTimeout(() => {
+        if (cameraInputRef.current) {
+          cameraInputRef.current.click();
+          setIsCameraModalOpen(false);
+        }
+      }, 800);
+    }
+  };
+
+  // Stop Live Camera Stream
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+  };
+
+  const handleOpenLiveCamera = () => {
+    setIsCameraModalOpen(true);
+    setCameraSnapshot(null);
+    setTimeout(() => {
+      startCamera(cameraFacing);
+    }, 100);
+  };
+
+  const handleCloseCameraModal = () => {
+    stopCamera();
+    setIsCameraModalOpen(false);
+    setCameraSnapshot(null);
+  };
+
+  const handleSwitchCameraFacing = () => {
+    const nextFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+    setCameraFacing(nextFacing);
+    startCamera(nextFacing);
+  };
+
+  const handleTakeSnapshot = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    setCameraSnapshot(dataUrl);
+    stopCamera();
+  };
+
+  const handleRetakeSnapshot = () => {
+    setCameraSnapshot(null);
+    startCamera(cameraFacing);
+  };
+
+  const handleConfirmSnapshot = async () => {
+    if (!cameraSnapshot) return;
+
+    // Convert dataUrl to File object
+    const res = await fetch(cameraSnapshot);
+    const blob = await res.blob();
+    const file = new File([blob], `camera_found_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+    await processImage(file, cameraSnapshot);
+    handleCloseCameraModal();
+  };
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
   const handleAutoExtractTags = async () => {
     setAnalyzingPhoto(true);
@@ -241,75 +369,34 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
       return;
     }
 
-    // Check future date
-    if (dateTime && new Date(dateTime) > new Date(Date.now() + 60000)) {
-      setError('Incident date and time cannot be in the future.');
-      return;
-    }
+    const finalLocation = customLocation.trim() 
+      ? `${location} (${customLocation.trim()})`
+      : location;
 
-    // Contact info format validation
-    const contactClean = contactInfo.trim();
-    if (!contactClean) {
-      setError('Please provide contact information or custody drop-off location.');
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{3,6}$/;
-    const isValidFormat = emailRegex.test(contactClean) || phoneRegex.test(contactClean.replace(/[\s\-\(\)\.]/g, ''));
-    if (isLost && !isValidFormat) {
-      setError('Please provide a valid contact email address (e.g. your.name2023@vitstudent.ac.in) or phone number for the lost item.');
-      return;
-    }
+    // Use uploaded URL or base64 dataUrl or crisp category fallback
+    const finalPhoto = uploadedUrl || photoDataUrl || getCategoryFallbackImage(category);
 
+    const payload = {
+      title: trimmedTitle,
+      type: type, // 'lost' or 'found'
+      category: category,
+      location: finalLocation,
+      dateTime: new Date(dateTime).toISOString(),
+      description: trimmedDesc,
+      photoUrl: finalPhoto,
+      ai_tags: aiTags,
+      detected_labels: detectedLabels,
+      contactInfo: contactInfo.trim() || currentUser?.email || 'Contact student via campus security',
+      userId: currentUser?.id || 'usr-vit-student',
+      userEmail: currentUser?.email || ''
+    };
 
     setSubmitting(true);
 
-    const finalLocation = customLocation.trim() || location;
-
-    // Prioritize high-reliability compressed Data URL (or uploadedUrl / category fallback)
-    const finalPhoto = photoDataUrl || uploadedUrl || photoPreview || getCategoryFallbackImage(category);
-
-
-    // Ensure AI tags are never empty
-    let finalAiTags = [...aiTags];
-    let finalDetectedLabels = [...detectedLabels];
-    if (finalAiTags.length === 0) {
-      try {
-        const autoTags = await api.analyzeRekognition(trimmedTitle, category, trimmedDesc);
-        finalAiTags = autoTags.ai_tags || [];
-        finalDetectedLabels = autoTags.detected_labels || [];
-      } catch (err) {
-        console.warn('Auto tags fallback on submit:', err);
-      }
-    }
-
-    // Convert local dateTime selection to UTC ISO 8601 string
-    let isoDateTime = new Date().toISOString();
-    if (dateTime) {
-      const parsed = new Date(dateTime);
-      if (!isNaN(parsed.getTime())) {
-        isoDateTime = parsed.toISOString();
-      }
-    }
-
     try {
-      const payload = {
-        title: trimmedTitle,
-        type: type,
-        category: category,
-        location: finalLocation,
-        dateTime: isoDateTime,
-        description: trimmedDesc,
-        photoUrl: finalPhoto,
-        ai_tags: finalAiTags,
-        detected_labels: finalDetectedLabels,
-        contactInfo: contactClean,
-        userId: currentUser?.id,
-        userEmail: currentUser?.email
-      };
-
       const res = await api.createItem(payload);
-      setCreatedItem(res.item);
+      const itemData = res?.item || payload;
+      setCreatedItem(itemData);
     } catch (err) {
       setError(err.message || 'Failed to submit report. Please try again.');
     } finally {
@@ -317,57 +404,55 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
     }
   };
 
-
+  // Success view
   if (createdItem) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12 text-center space-y-5 animate-fadeIn">
-        <div className="w-16 h-16 rounded-3xl bg-found-emerald/10 text-found-emerald flex items-center justify-center mx-auto shadow-md">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 text-center space-y-6 animate-fadeIn">
+        <div className="w-16 h-16 rounded-3xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
           <CheckCircle2 className="w-9 h-9" />
         </div>
+
         <div className="space-y-2">
-          <h2 className="text-2xl font-headline font-black text-on-surface">
-            {isLost ? 'Lost Item Report Registered!' : 'Found Item Report Submitted!'}
+          <h2 className="text-2xl font-headline font-black text-slate-900 dark:text-white">
+            {isLost ? 'Lost Item Report Submitted!' : 'Found Item Registered!'}
           </h2>
-          <p className="text-sm text-outline max-w-md mx-auto font-body">
-            Your report has been saved to Amazon DynamoDB and analyzed by Amazon Rekognition.
-            FindIt VITC AI matching engine has already scanned opposing reports.
+          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+            Your report has been securely indexed in Amazon DynamoDB. Amazon Rekognition tags are active for instant AI match detection.
           </p>
         </div>
 
-        {/* Item preview card */}
-        <div className="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/60 text-left flex items-center gap-4 max-w-lg mx-auto shadow-xs">
-          <img
-            src={getImageUrl(createdItem.photoUrl, createdItem.category)}
-            alt={createdItem.title}
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = getCategoryFallbackImage(createdItem.category);
-            }}
-            className="w-16 h-16 rounded-xl object-cover"
-          />
-          <div className="flex-1">
-            <span className={`text-[10px] font-label font-bold uppercase px-2 py-0.5 rounded text-white ${
-              isLost ? 'bg-lost-coral' : 'bg-found-emerald'
-            }`}>
-              {createdItem.type}
-            </span>
-            <h4 className="font-headline font-bold text-sm text-on-surface mt-1">{createdItem.title}</h4>
-            <p className="text-xs text-outline">{createdItem.location}</p>
+        {/* Report Summary Card */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-left space-y-3 shadow-md">
+          <div className="flex items-center gap-3">
+            <img 
+              src={getImageUrl(createdItem.photoUrl, createdItem.category)} 
+              alt={createdItem.title} 
+              className="w-14 h-14 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0" 
+            />
+            <div className="min-w-0 flex-1">
+              <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded text-white ${
+                isLost ? 'bg-red-500' : 'bg-emerald-600'
+              }`}>
+                {createdItem.type}
+              </span>
+              <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate mt-1">{createdItem.title}</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{createdItem.location}</p>
+            </div>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
           <button
             onClick={() => onReportSuccess('feed', createdItem)}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-container text-white font-headline font-bold text-xs shadow-lg shadow-primary/20 transition flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/20 transition flex items-center justify-center gap-2"
           >
             <span>View in Home Feed</span>
           </button>
           <button
             onClick={() => onReportSuccess('my-reports', createdItem)}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-primary-fixed/40 hover:bg-primary-fixed text-primary font-headline font-bold text-xs border border-primary/20 transition flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-700 dark:text-blue-300 font-bold text-xs border border-blue-200 dark:border-blue-800 transition flex items-center justify-center gap-2"
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <span>Check AI Matches</span>
           </button>
           <button
@@ -376,9 +461,12 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
               setTitle('');
               setDescription('');
               setPhotoPreview('');
+              setPhotoDataUrl('');
+              setUploadedUrl('');
+              setPhotoFile(null);
               setAiTags([]);
             }}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-outline-variant/60 hover:bg-surface-container text-on-surface-variant font-headline font-semibold text-xs transition"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition"
           >
             Submit Another Report
           </button>
@@ -389,7 +477,135 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md p-6 sm:p-8 space-y-6">
+      {/* Hidden File Inputs */}
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        onChange={handlePhotoSelect}
+        className="hidden"
+      />
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        ref={cameraInputRef}
+        onChange={handlePhotoSelect}
+        className="hidden"
+      />
+
+      {/* Live Camera Viewfinder Modal */}
+      {isCameraModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden max-w-lg w-full shadow-2xl space-y-4 p-5 text-white">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-emerald-400" />
+                <h3 className="font-bold text-sm text-white">
+                  {cameraSnapshot ? 'Review Camera Snapshot' : 'Live Camera Viewfinder'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseCameraModal}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {cameraError && (
+              <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-500/50 text-xs text-amber-300 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{cameraError}</span>
+              </div>
+            )}
+
+            {/* Video or Snapshot Canvas Preview */}
+            <div className="relative aspect-video sm:aspect-[4/3] bg-black rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center">
+              {cameraSnapshot ? (
+                <img src={cameraSnapshot} alt="Snapshot Preview" className="w-full h-full object-cover" />
+              ) : (
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                />
+              )}
+              <canvas ref={canvasRef} className="hidden" />
+
+              {!cameraSnapshot && (
+                <div className="absolute inset-0 pointer-events-none border-2 border-emerald-500/30 rounded-2xl m-4 flex items-center justify-center">
+                  <div className="text-[10px] uppercase font-bold tracking-widest text-emerald-400 bg-black/50 px-2 py-1 rounded-md backdrop-blur-sm">
+                    Frame Item Inside Box
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Camera Actions */}
+            <div className="flex items-center justify-between gap-3 pt-2">
+              {cameraSnapshot ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleRetakeSnapshot}
+                    className="flex-1 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 font-semibold text-xs transition flex items-center justify-center gap-1.5"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Retake</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmSnapshot}
+                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Use This Photo</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleSwitchCameraFacing}
+                    title="Switch Front/Back Camera"
+                    className="p-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 transition"
+                  >
+                    <SwitchCamera className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleTakeSnapshot}
+                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>Capture Snapshot</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      cameraInputRef.current?.click();
+                      handleCloseCameraModal();
+                    }}
+                    title="Open native camera"
+                    className="px-3 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 text-xs font-medium transition"
+                  >
+                    Device App
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Report Form Container */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md p-6 sm:p-8 space-y-6 transition-colors">
         {/* Header */}
         <div className="border-b border-slate-100 dark:border-slate-800 pb-5">
           <div className="flex items-center justify-between gap-4">
@@ -398,7 +614,7 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
                 {isLost ? 'Report a Lost Item' : 'Report a Found Item'}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-body">
-                Fill in the details below. FindIt VITC AWS Rekognition vision model will auto-tag your photo for AI matching.
+                Fill in the details below. Take a photo or upload an image for Amazon Rekognition AI auto-matching.
               </p>
             </div>
 
@@ -408,7 +624,9 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
                 type="button"
                 onClick={() => setType('lost')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-headline font-bold transition ${
-                  isLost ? 'bg-lost-coral text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  isLost 
+                    ? 'bg-red-500 text-white shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Lost
@@ -417,7 +635,9 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
                 type="button"
                 onClick={() => setType('found')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-headline font-bold transition ${
-                  !isLost ? 'bg-found-emerald text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  !isLost 
+                    ? 'bg-emerald-600 text-white shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Found
@@ -450,7 +670,7 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
               maxLength={100}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Space Gray MacBook Air, Navy Kånken Backpack, Subaru Car Key"
+              placeholder="e.g. Space Gray MacBook Air, Navy Kånken Backpack, Casio FX-991CW Calculator"
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-xs sm:text-sm outline-none transition"
             />
           </div>
@@ -534,15 +754,15 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
             />
           </div>
 
-          {/* Photo Upload with Amazon Rekognition AI Auto-Tagging */}
+          {/* Photo Capture & Upload with Amazon Rekognition AI Auto-Tagging */}
           <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                  Item Photo & Amazon Rekognition Vision Auto-Tagging
+                  Item Photo &amp; Amazon Rekognition Vision Auto-Tagging
                 </span>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Upload an image to auto-detect objects, labels, and colors for AI match calculation.
+                  Take a photo with your camera or upload an image to auto-detect labels and colors.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -558,43 +778,95 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
               </div>
             </div>
 
-            {/* Upload Box */}
+            {/* Photo Capture Actions / Preview */}
             <div className="flex flex-col sm:flex-row items-center gap-4">
               {photoPreview ? (
-                <div className="w-32 h-32 rounded-xl overflow-hidden relative border border-slate-300 dark:border-slate-600 shrink-0">
-                  <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPhotoPreview('');
-                      setPhotoFile(null);
-                      setAiTags([]);
-                      setDetectedLabels([]);
-                    }}
-                    className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-black/80 transition"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+                <div className="w-full sm:w-auto flex flex-col items-center gap-2 shrink-0">
+                  <div className="w-36 h-36 rounded-2xl overflow-hidden relative border-2 border-emerald-500/40 shadow-md group">
+                    <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPhotoPreview('');
+                        setPhotoDataUrl('');
+                        setUploadedUrl('');
+                        setPhotoFile(null);
+                        setAiTags([]);
+                        setDetectedLabels([]);
+                      }}
+                      className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-black/70 text-white hover:bg-red-600 transition shadow-sm"
+                      title="Remove image"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 w-full">
+                    <button
+                      type="button"
+                      onClick={handleOpenLiveCamera}
+                      className="flex-1 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 text-[11px] font-semibold transition flex items-center justify-center gap-1"
+                    >
+                      <Camera className="w-3 h-3 text-emerald-500" />
+                      <span>Retake</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex-1 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 text-[11px] font-semibold transition flex items-center justify-center gap-1"
+                    >
+                      <UploadCloud className="w-3 h-3 text-blue-500" />
+                      <span>Change</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <label className="w-full sm:w-48 h-32 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 bg-white dark:bg-slate-800 hover:bg-blue-50/40 dark:hover:bg-slate-750 flex flex-col items-center justify-center gap-2 cursor-pointer transition p-4 text-center">
-                  <UploadCloud className="w-6 h-6 text-slate-400 dark:text-slate-500" />
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Upload Photo</span>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">PNG, JPG up to 10MB</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoSelect}
-                    className="hidden"
-                  />
-                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:w-80 shrink-0">
+                  {/* Option 1: Open Camera (Live Viewfinder + Device Shutter) */}
+                  <button
+                    type="button"
+                    onClick={handleOpenLiveCamera}
+                    className="h-32 rounded-2xl border-2 border-dashed border-emerald-400/80 dark:border-emerald-500/50 hover:border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30 flex flex-col items-center justify-center gap-2 p-3 text-center transition group cursor-pointer shadow-xs"
+                  >
+                    <div className="p-2.5 rounded-xl bg-emerald-500 text-white shadow-md shadow-emerald-500/25 group-hover:scale-105 transition-transform">
+                      <Camera className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="block text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                        Take Photo
+                      </span>
+                      <span className="block text-[10px] text-emerald-600/80 dark:text-emerald-400/80">
+                        Camera &amp; Live Viewfinder
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Option 2: Upload from Device Storage */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-32 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 bg-white dark:bg-slate-800 hover:bg-blue-50/40 dark:hover:bg-slate-750 flex flex-col items-center justify-center gap-2 p-3 text-center transition group cursor-pointer shadow-xs"
+                  >
+                    <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/25 group-hover:scale-105 transition-transform">
+                      <UploadCloud className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                        Upload Image
+                      </span>
+                      <span className="block text-[10px] text-slate-500 dark:text-slate-400">
+                        From Files or Gallery
+                      </span>
+                    </div>
+                  </button>
+                </div>
               )}
 
+              {/* Rekognition Status & AI Labels */}
               <div className="flex-1 space-y-2 w-full">
                 {analyzingPhoto ? (
-                  <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-semibold p-3 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-semibold p-3.5 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800 animate-pulse">
                     <div className="w-4 h-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin shrink-0" />
-                    <span>Analyzing image with Amazon Rekognition DetectLabels...</span>
+                    <span>Analyzing image with Amazon Rekognition DetectLabels in AWS Cloud...</span>
                   </div>
                 ) : aiTags.length > 0 ? (
                   <div className="space-y-1.5">
@@ -622,7 +894,7 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
                   </div>
                 ) : (
                   <p className="text-xs text-slate-400 dark:text-slate-500 italic">
-                    Upload a photo to see Amazon Rekognition automatically extract tags. Or add custom tags below.
+                    Capture a photo with your camera or upload an image to let Amazon Rekognition automatically extract tags. Or add custom tags below.
                   </p>
                 )}
 

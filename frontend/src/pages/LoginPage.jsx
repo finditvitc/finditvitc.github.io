@@ -62,7 +62,7 @@ export const LoginPage = ({ onOpenArchitecture }) => {
       await signInWithCognito(email, password);
     } catch (err) {
       if (err.code === 'UserNotConfirmedException') {
-        setErrorMsg(err.message);
+        setErrorMsg(err.message || 'Account not yet confirmed. Please verify with the 6-digit code sent to your email.');
         setMode('verify');
       } else if (err.code === 'NotAuthorizedException') {
         setErrorMsg('Incorrect email or password. Please verify your credentials.');
@@ -229,44 +229,50 @@ export const LoginPage = ({ onOpenArchitecture }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-between selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between transition-colors duration-200 selection:bg-blue-600 selection:text-white">
       {/* Top Header */}
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center text-white shadow-lg shadow-primary/25">
-              <span className="font-headline font-black text-lg tracking-tight">FI</span>
+      <header className="border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-20 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2">
+          {/* Brand Logo & Title */}
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center text-white shadow-md shadow-primary/25 shrink-0">
+              <span className="font-headline font-black text-base sm:text-lg tracking-tight">FI</span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-headline font-black text-lg tracking-tight text-white">FindIt VITC</span>
-                <span className="text-[10px] uppercase font-label font-bold tracking-wider px-1.5 py-0.5 rounded bg-primary/20 text-primary-fixed border border-primary/30">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-headline font-black text-base sm:text-lg tracking-tight text-slate-900 dark:text-white truncate">
+                  FindIt VITC
+                </span>
+                <span className="text-[9px] sm:text-[10px] uppercase font-label font-bold tracking-wider px-1.5 py-0.5 rounded bg-blue-500/10 dark:bg-primary/20 text-blue-600 dark:text-primary-fixed border border-blue-500/20 dark:border-primary/30 shrink-0">
                   AWS Serverless
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">VIT Chennai Lost &amp; Found + Emergency Broadcast Network</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 truncate hidden xs:block">
+                VIT Chennai Lost &amp; Found + Emergency Broadcast Network
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Controls: Dark/Light Mode & Architecture */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={toggleTheme}
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              className="p-2 rounded-xl border border-slate-700 hover:border-primary/50 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white transition shadow-sm"
+              className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-primary/50 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition shadow-sm"
               aria-label="Toggle dark mode"
             >
               {theme === 'dark' ? (
                 <Sun className="w-4 h-4 text-amber-400" />
               ) : (
-                <Moon className="w-4 h-4 text-slate-300" />
+                <Moon className="w-4 h-4 text-slate-700" />
               )}
             </button>
 
             <button
               onClick={onOpenArchitecture}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-700 hover:border-primary/50 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium transition shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-primary/50 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-medium transition shadow-sm"
             >
-              <Cloud className="w-4 h-4 text-primary-fixed" />
+              <Cloud className="w-4 h-4 text-blue-600 dark:text-primary-fixed" />
               <span className="hidden sm:inline">AWS Architecture</span>
             </button>
           </div>
@@ -274,22 +280,22 @@ export const LoginPage = ({ onOpenArchitecture }) => {
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex-1 w-full flex flex-col items-center justify-center">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex-1 w-full flex flex-col items-center justify-center">
         <div className="w-full max-w-md space-y-6">
           {/* Header Title */}
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary-fixed text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-primary/10 border border-blue-200 dark:border-primary/30 text-blue-700 dark:text-primary-fixed text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-primary" />
               <span>VIT Chennai Student Authentication</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-headline font-black tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-headline font-black tracking-tight text-slate-900 dark:text-white">
               {mode === 'signin' && 'Welcome to FindIt VITC'}
               {mode === 'signup' && 'Student Registration'}
               {mode === 'verify' && 'Verify Student Email'}
               {mode === 'forgot' && 'Reset Your Password'}
               {mode === 'reset_confirm' && 'Set New Password'}
             </h1>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
               {mode === 'signin' && 'Sign in with your verified @vitstudent.ac.in account'}
               {mode === 'signup' && 'Exclusive access for VIT Chennai students (@vitstudent.ac.in)'}
               {mode === 'verify' && 'Enter the 6-digit confirmation code sent to your student email'}
@@ -299,15 +305,17 @@ export const LoginPage = ({ onOpenArchitecture }) => {
           </div>
 
           {/* Authentication Card */}
-          <div className="bg-slate-950/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-5">
+          <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-8 shadow-xl dark:shadow-2xl backdrop-blur-md space-y-5 transition-colors">
             {/* Mode Switcher Tabs for SignIn / SignUp */}
             {(mode === 'signin' || mode === 'signup') && (
-              <div className="flex rounded-xl bg-slate-900 p-1 border border-slate-800">
+              <div className="flex rounded-xl bg-slate-100 dark:bg-slate-950 p-1 border border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => { setMode('signin'); resetMessages(); }}
                   className={`flex-1 py-2 rounded-lg text-xs font-bold transition ${
-                    mode === 'signin' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                    mode === 'signin' 
+                      ? 'bg-blue-600 text-white shadow-sm' 
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Student Sign In
@@ -316,7 +324,9 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                   type="button"
                   onClick={() => { setMode('signup'); resetMessages(); }}
                   className={`flex-1 py-2 rounded-lg text-xs font-bold transition ${
-                    mode === 'signup' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                    mode === 'signup' 
+                      ? 'bg-blue-600 text-white shadow-sm' 
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Register
@@ -326,16 +336,16 @@ export const LoginPage = ({ onOpenArchitecture }) => {
 
             {/* Error Message Alert */}
             {errorMsg && (
-              <div className="p-3.5 rounded-xl bg-red-950/60 border border-red-500/50 text-xs text-red-300 flex items-start gap-2 animate-fadeIn">
-                <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-500/50 text-xs text-red-700 dark:text-red-300 flex items-start gap-2 animate-fadeIn">
+                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
                 <span className="flex-1">{errorMsg}</span>
               </div>
             )}
 
             {/* Success Message Alert */}
             {successMsg && (
-              <div className="p-3.5 rounded-xl bg-emerald-950/60 border border-emerald-500/50 text-xs text-emerald-300 flex items-start gap-2 animate-fadeIn">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-500/50 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2 animate-fadeIn">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                 <span className="flex-1">{successMsg}</span>
               </div>
             )}
@@ -344,49 +354,49 @@ export const LoginPage = ({ onOpenArchitecture }) => {
             {mode === 'signin' && (
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                     VIT Student Email Address *
                   </label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                    <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-3" />
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your.name2023@vitstudent.ac.in"
-                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:border-blue-500 focus:outline-none transition"
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:bg-white dark:focus:bg-slate-900 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition"
                     />
                   </div>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                       Password *
                     </label>
                     <button
                       type="button"
                       onClick={() => { setMode('forgot'); resetMessages(); }}
-                      className="text-[11px] text-blue-400 hover:text-blue-300 transition"
+                      className="text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition"
                     >
                       Forgot password?
                     </button>
                   </div>
                   <div className="relative">
-                    <Key className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                    <Key className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-3" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:border-blue-500 focus:outline-none transition"
+                      className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:bg-white dark:focus:bg-slate-900 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300"
+                      className="absolute right-3 top-3 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -417,7 +427,7 @@ export const LoginPage = ({ onOpenArchitecture }) => {
             {mode === 'signup' && (
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                     Full Student Name *
                   </label>
                   <input
@@ -426,24 +436,24 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Rahul Sharma"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:border-blue-500 focus:outline-none transition"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:bg-white dark:focus:bg-slate-900 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                     VIT Chennai School / Department *
                   </label>
                   <div className="relative">
-                    <Building className="w-4 h-4 text-slate-500 absolute left-3 top-2.5 pointer-events-none" />
+                    <Building className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-3 pointer-events-none" />
                     <select
                       required
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:border-blue-500 focus:outline-none transition"
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:bg-white dark:focus:bg-slate-900 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none transition"
                     >
                       {VIT_CHENNAI_SCHOOLS.map((school) => (
-                        <option key={school} value={school} className="bg-slate-900 text-white">
+                        <option key={school} value={school} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                           {school}
                         </option>
                       ))}
@@ -452,28 +462,28 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                     VIT Student Email Address (@vitstudent.ac.in) *
                   </label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                    <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-3" />
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your.name2023@vitstudent.ac.in"
-                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:border-blue-500 focus:outline-none transition"
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:bg-white dark:focus:bg-slate-900 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition"
                     />
                   </div>
-                  <p className="text-[10px] text-blue-400 mt-1">
+                  <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-1">
                     Registration is strictly restricted to valid @vitstudent.ac.in student addresses.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                       Password *
                     </label>
                     <input
@@ -482,12 +492,12 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:border-blue-500 focus:outline-none transition"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:bg-white dark:focus:bg-slate-900 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                       Confirm Password *
                     </label>
                     <input
@@ -496,13 +506,13 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:border-blue-500 focus:outline-none transition"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:bg-white dark:focus:bg-slate-900 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition"
                     />
                   </div>
                 </div>
 
-                <p className="text-[10px] text-slate-400">
-                  Password requires $\ge$ 8 chars with uppercase, lowercase, numbers & symbols.
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                  Password requires at least 8 chars with uppercase, lowercase, numbers &amp; symbols.
                 </p>
 
                 <button
@@ -529,7 +539,7 @@ export const LoginPage = ({ onOpenArchitecture }) => {
             {mode === 'verify' && (
               <form onSubmit={handleConfirmVerification} className="space-y-4 animate-fadeIn">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                     Account Email
                   </label>
                   <input
@@ -537,12 +547,12 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-xs outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                     6-Digit Email Confirmation Code *
                   </label>
                   <input
@@ -552,7 +562,7 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                     placeholder="123456"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-center font-mono tracking-widest text-lg focus:border-blue-500 focus:outline-none transition"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-center font-mono tracking-widest text-lg focus:bg-white dark:focus:bg-slate-900 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition"
                   />
                 </div>
 
@@ -571,19 +581,19 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                   )}
                 </button>
 
-                <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800">
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-800">
                   <button
                     type="button"
                     disabled={resendCooldown > 0 || loading}
                     onClick={handleResendCode}
-                    className="text-blue-400 hover:text-blue-300 transition disabled:opacity-50"
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition disabled:opacity-50"
                   >
                     {resendCooldown > 0 ? `Resend Code (${resendCooldown}s)` : 'Resend Code'}
                   </button>
                   <button
                     type="button"
                     onClick={() => { setMode('signin'); resetMessages(); }}
-                    className="text-slate-400 hover:text-slate-200 transition"
+                    className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition"
                   >
                     Back to Sign In
                   </button>
@@ -595,7 +605,7 @@ export const LoginPage = ({ onOpenArchitecture }) => {
             {mode === 'forgot' && (
               <form onSubmit={handleForgotPassword} className="space-y-4 animate-fadeIn">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                     Your Registered VIT Student Email *
                   </label>
                   <input
@@ -604,7 +614,7 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your.name2023@vitstudent.ac.in"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:border-blue-500 focus:outline-none transition"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:bg-white dark:focus:bg-slate-900 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none transition"
                   />
                 </div>
 
@@ -620,7 +630,7 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                   <button
                     type="button"
                     onClick={() => { setMode('signin'); resetMessages(); }}
-                    className="text-xs text-slate-400 hover:text-slate-200 transition"
+                    className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition"
                   >
                     Cancel and Return to Sign In
                   </button>
@@ -632,7 +642,7 @@ export const LoginPage = ({ onOpenArchitecture }) => {
             {mode === 'reset_confirm' && (
               <form onSubmit={handleConfirmResetPassword} className="space-y-4 animate-fadeIn">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                     Reset Code from Email *
                   </label>
                   <input
@@ -642,12 +652,12 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value)}
                     placeholder="123456"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-center font-mono tracking-widest text-base focus:border-blue-500 focus:outline-none transition"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white text-center font-mono tracking-widest text-base focus:bg-white dark:focus:bg-slate-900 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                     New Password *
                   </label>
                   <input
@@ -656,7 +666,7 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:border-blue-500 focus:outline-none transition"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:bg-white dark:focus:bg-slate-900 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none transition"
                   />
                 </div>
 
@@ -672,7 +682,7 @@ export const LoginPage = ({ onOpenArchitecture }) => {
                   <button
                     type="button"
                     onClick={() => { setMode('signin'); resetMessages(); }}
-                    className="text-xs text-slate-400 hover:text-slate-200 transition"
+                    className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition"
                   >
                     Back to Sign In
                   </button>
@@ -684,10 +694,10 @@ export const LoginPage = ({ onOpenArchitecture }) => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 bg-slate-950 py-5 text-xs text-slate-500">
+      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-5 text-xs text-slate-500 dark:text-slate-400 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div>
-            <span className="font-bold text-slate-400">FindIt VITC</span> • Vellore Institute of Technology, Chennai
+            <span className="font-bold text-slate-700 dark:text-slate-300">FindIt VITC</span> • Vellore Institute of Technology, Chennai
           </div>
           <div className="flex items-center gap-2">
             <span>Production Authentication via Amazon Cognito User Pool</span>
