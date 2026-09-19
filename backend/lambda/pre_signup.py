@@ -14,9 +14,9 @@ def lambda_handler(event, context):
     if not email.endswith('@vitstudent.ac.in'):
         raise Exception("Access Denied: Registration is strictly restricted to valid VIT Chennai student accounts (@vitstudent.ac.in).")
     
-    # Auto-confirm user and mark email as verified
+    # Do NOT auto-confirm: Cognito will dispatch a real 6-digit verification code to the student's email
     event.setdefault('response', {})
-    event['response']['autoConfirmUser'] = True
-    event['response']['autoVerifyEmail'] = True
+    event['response']['autoConfirmUser'] = False
+    event['response']['autoVerifyEmail'] = False
     
     return event
