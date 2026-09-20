@@ -92,18 +92,18 @@ def get_user_from_event(event: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 def ensure_presigned_url(photo_url: str) -> str:
-    """Converts private S3 URLs or keys to 7-day presigned GET URLs to prevent 403 AccessDenied."""
+    """Converts private S3 URLs or keys to fresh 7-day presigned GET URLs to prevent 403 AccessDenied."""
     if not photo_url:
         return ""
     if photo_url.startswith("data:image/") or photo_url.startswith("http://localhost:8000") or "unsplash.com" in photo_url:
         return photo_url
-    if "s3" in photo_url or photo_url.startswith("items/"):
-        if "X-Amz-Signature" in photo_url:
-            return photo_url  # Already a valid presigned URL
+    if "s3" in photo_url or photo_url.startswith("items/") or "amazonaws.com" in photo_url:
         bucket = os.environ.get('PHOTOS_BUCKET_NAME', 'campusfind-photos-694442891642-ap-south-1')
         key = photo_url
-        if "amazonaws.com/" in photo_url:
-            key = photo_url.split("amazonaws.com/")[1]
+        if "?" in key:
+            key = key.split("?")[0]
+        if "amazonaws.com/" in key:
+            key = key.split("amazonaws.com/")[1]
         try:
             from botocore.config import Config
             s3 = boto3.client('s3', region_name=AWS_REGION, config=Config(signature_version='s3v4'))
@@ -247,6 +247,11 @@ def handle_create_item(body_data: Dict[str, Any], event: Dict[str, Any], table) 
         ai_tags = semantic_res.get('ai_tags', [])
         detected_labels = semantic_res.get('detected_labels', [])
 
+    photo_val = str(body_data.get('photoUrl', '')).strip()
+    stored_photo = photo_val
+    if "amazonaws.com/" in stored_photo and "?" in stored_photo:
+        stored_photo = stored_photo.split("?")[0]
+
     new_item = {
         'id': item_id,
         'title': title_val,
@@ -255,7 +260,7 @@ def handle_create_item(body_data: Dict[str, Any], event: Dict[str, Any], table) 
         'location': str(body_data['location']).strip(),
         'dateTime': raw_date or now_iso,
         'description': desc_val,
-        'photoUrl': body_data.get('photoUrl', ''),
+        'photoUrl': stored_photo,
         'ai_tags': ai_tags,
         'detected_labels': convert_floats_to_decimals(detected_labels),
         'status': 'open',
@@ -266,11 +271,12 @@ def handle_create_item(body_data: Dict[str, Any], event: Dict[str, Any], table) 
         'updatedAt': now_iso
     }
 
-
     try:
         table.put_item(Item=new_item)
         logger.info(f"Created item {item_id} ({new_item['type']})")
-        return build_cors_response(201, {'message': 'Item created successfully', 'item': new_item})
+        res_item = dict(new_item)
+        res_item['photoUrl'] = ensure_presigned_url(new_item.get('photoUrl', ''))
+        return build_cors_response(201, {'message': 'Item created successfully', 'item': res_item})
     except Exception as e:
         logger.error(f"Error creating item: {e}")
         return build_cors_response(500, {'error': str(e)})
@@ -282,6 +288,7 @@ def handle_get_item(item_id: str, table) -> Dict[str, Any]:
         item = response.get('Item')
         if not item:
             return build_cors_response(404, {'error': f"Item '{item_id}' not found"})
+        item['photoUrl'] = ensure_presigned_url(item.get('photoUrl', ''))
         return build_cors_response(200, {'item': item})
     except Exception as e:
         logger.error(f"Error retrieving item {item_id}: {e}")
@@ -345,7 +352,10 @@ def handle_update_item(item_id: str, body_data: Dict[str, Any], event: Dict[str,
             ExpressionAttributeValues={':status': status.lower(), ':updated': now_iso},
             ReturnValues="ALL_NEW"
         )
-        return build_cors_response(200, {'message': 'Item updated', 'item': response.get('Attributes')})
+        updated_item = response.get('Attributes')
+        if updated_item:
+            updated_item['photoUrl'] = ensure_presigned_url(updated_item.get('photoUrl', ''))
+        return build_cors_response(200, {'message': 'Item updated', 'item': updated_item})
     except Exception as e:
         logger.error(f"Error updating item {item_id}: {e}")
         return build_cors_response(500, {'error': str(e)})
@@ -416,6 +426,12 @@ def handle_get_matches(item_id: str, table) -> Dict[str, Any]:
 
         # Run AI matching algorithm
         matches = find_matches_for_item(target_item, candidates, min_score=20.0)
+
+        # Ensure all photos in match suggestions have active presigned URLs
+        target_item['photoUrl'] = ensure_presigned_url(target_item.get('photoUrl', ''))
+        for m in matches:
+            if 'item' in m and m['item']:
+                m['item']['photoUrl'] = ensure_presigned_url(m['item'].get('photoUrl', ''))
 
         return build_cors_response(200, {
             'target_item': target_item,

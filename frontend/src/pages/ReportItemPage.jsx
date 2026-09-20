@@ -431,8 +431,12 @@ export const ReportItemPage = ({ defaultType = 'lost', onReportSuccess }) => {
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-left space-y-3 shadow-md">
           <div className="flex items-center gap-3">
             <img 
-              src={getImageUrl(createdItem.photoUrl, createdItem.category)} 
+              src={photoPreview || getImageUrl(createdItem.photoUrl, createdItem.category)} 
               alt={createdItem.title} 
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = photoPreview || getCategoryFallbackImage(createdItem.category);
+              }}
               className="w-14 h-14 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0" 
             />
             <div className="min-w-0 flex-1">
