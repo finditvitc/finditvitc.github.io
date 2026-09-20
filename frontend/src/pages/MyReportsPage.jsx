@@ -623,11 +623,13 @@ export const MyReportsPage = ({ initialSelectedItem = null, onNavigateReport }) 
             {/* Action Buttons */}
             <div className="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
               <a
-                href={activeContactModal.mailtoLink || `mailto:${activeContactModal.recipientEmail}?subject=${encodeURIComponent(`[FindIt VITC] Lost & Found: ${activeContactModal.matchTitle}`)}`}
-                className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-headline font-bold text-xs shadow-md shadow-blue-600/20 transition text-center flex items-center justify-center gap-1.5"
+                href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(activeContactModal.recipientEmail)}&su=${encodeURIComponent(activeContactModal.subject || `[FindIt VITC] Lost & Found: ${activeContactModal.matchTitle}`)}&body=${encodeURIComponent(activeContactModal.body || '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-headline font-bold text-xs shadow-md shadow-red-600/20 transition text-center flex items-center justify-center gap-1.5"
               >
                 <ExternalLink className="w-4 h-4" />
-                <span>Open in Email App (Gmail / Outlook)</span>
+                <span>Open in Gmail</span>
               </a>
               <button
                 onClick={() => setActiveContactModal(null)}
@@ -636,6 +638,7 @@ export const MyReportsPage = ({ initialSelectedItem = null, onNavigateReport }) 
                 Done
               </button>
             </div>
+
           </div>
         </div>
       )}

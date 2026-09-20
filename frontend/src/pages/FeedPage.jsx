@@ -11,8 +11,11 @@ import {
   Clock, 
   Layers, 
   CheckCircle2, 
-  HelpCircle 
+  HelpCircle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
+
 import { api } from '../services/api';
 import { getCategoryFallbackImage, getImageUrl } from '../utils/imageFallbacks';
 
@@ -65,7 +68,12 @@ export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feed
   const [location, setLocation] = useState('All');
   const [statusFilter, setStatusFilter] = useState('open');
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
+
   useEffect(() => {
+    setCurrentPage(1);
     loadItems();
   }, [activeTab, category, location, statusFilter, feedRefreshKey]);
 
@@ -91,10 +99,16 @@ export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feed
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    setCurrentPage(1);
     loadItems();
   };
 
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const displayedItems = items.slice(startIndex, startIndex + pageSize);
+
   return (
+
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
       {/* Top Banner / Hero */}
       <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-blue-700 rounded-3xl p-5 sm:p-8 text-white shadow-xl relative overflow-hidden">
@@ -284,122 +298,170 @@ export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feed
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {items.map((item) => {
-            const isLost = item.type === 'lost';
-            return (
-              <div
-                key={item.id}
-                className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg transition-all flex flex-col group hover:border-slate-300 dark:hover:border-slate-700"
-              >
-                {/* Image Container */}
-                <div 
-                  className="h-48 w-full bg-slate-100 dark:bg-slate-800 relative overflow-hidden cursor-pointer"
-                  onClick={() => onSelectItem(item)}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {displayedItems.map((item) => {
+              const isLost = item.type === 'lost';
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg transition-all flex flex-col group hover:border-slate-300 dark:hover:border-slate-700"
                 >
-                  <img
-                    src={getImageUrl(item.photoUrl, item.category)}
-                    alt={item.title}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = getCategoryFallbackImage(item.category);
-                    }}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
+                  {/* Image Container */}
+                  <div 
+                    className="h-48 w-full bg-slate-100 dark:bg-slate-800 relative overflow-hidden cursor-pointer"
+                    onClick={() => onSelectItem(item)}
+                  >
+                    <img
+                      src={getImageUrl(item.photoUrl, item.category)}
+                      alt={item.title}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = getCategoryFallbackImage(item.category);
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
 
-                  {/* Top Badges */}
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md text-white shadow-sm ${
-                      isLost ? 'bg-red-500' : 'bg-emerald-600'
+                    {/* Top Badges */}
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md text-white shadow-sm ${
+                        isLost ? 'bg-red-500' : 'bg-emerald-600'
+                      }`}>
+                        {item.type}
+                      </span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm text-white">
+                        {item.category}
+                      </span>
+                    </div>
+
+                    <span className={`absolute top-3 right-3 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md shadow-sm ${
+                      item.status === 'open'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : item.status === 'claimed'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-slate-200 text-slate-700'
                     }`}>
-                      {item.type}
-                    </span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm text-white">
-                      {item.category}
+                      {item.status}
                     </span>
                   </div>
 
-                  <span className={`absolute top-3 right-3 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md shadow-sm ${
-                    item.status === 'open'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : item.status === 'claimed'
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-slate-200 text-slate-700'
-                  }`}>
-                    {item.status}
-                  </span>
-                </div>
-
-                {/* Content */}
-                <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
-                  <div className="space-y-1.5">
-                    <h3 
-                      onClick={() => onSelectItem(item)}
-                      className="font-bold text-slate-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition line-clamp-1"
-                    >
-                      {item.title}
-                    </h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed font-body">
-                      {item.description || 'No detailed description provided.'}
-                    </p>
-                  </div>
-
-                  {/* Location & Time */}
-                  <div className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">{item.location}</span>
+                  {/* Content */}
+                  <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
+                    <div className="space-y-1.5">
+                      <h3 
+                        onClick={() => onSelectItem(item)}
+                        className="font-bold text-slate-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition line-clamp-1"
+                      >
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed font-body">
+                        {item.description || 'No detailed description provided.'}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 shrink-0" />
-                      <span>{item.dateTime ? new Date(item.dateTime).toLocaleDateString() : 'Recently'}</span>
-                    </div>
-                  </div>
 
-                  {/* Amazon Rekognition AI Tags */}
-                  {item.ai_tags && item.ai_tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      {item.ai_tags.slice(0, 3).map((tag, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[10px] font-semibold"
-                        >
-                          <Tag className="w-2.5 h-2.5" />
-                          {tag}
-                        </span>
-                      ))}
-                      {item.ai_tags.length > 3 && (
-                        <span className="text-[10px] text-slate-400 font-medium px-1">
-                          +{item.ai_tags.length - 3} more
-                        </span>
-                      )}
+                    {/* Location & Time */}
+                    <div className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">{item.location}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                        <span>{item.dateTime ? new Date(item.dateTime).toLocaleDateString() : 'Recently'}</span>
+                      </div>
                     </div>
-                  )}
 
-                  {/* Action Buttons */}
-                  <div className="pt-2 flex items-center gap-2">
-                    <button
-                      onClick={() => onSelectItem(item)}
-                      className="flex-1 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-xs transition"
-                    >
-                      Details
-                    </button>
-                    <button
-                      onClick={() => onSelectMatches(item)}
-                      className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-semibold text-xs transition"
-                      title="Run AI match engine against opposing reports"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                      <span>AI Matches</span>
-                    </button>
+                    {/* Amazon Rekognition AI Tags */}
+                    {item.ai_tags && item.ai_tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {item.ai_tags.slice(0, 3).map((tag, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[10px] font-semibold"
+                          >
+                            <Tag className="w-2.5 h-2.5" />
+                            {tag}
+                          </span>
+                        ))}
+                        {item.ai_tags.length > 3 && (
+                          <span className="text-[10px] text-slate-400 font-medium px-1">
+                            +{item.ai_tags.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="pt-2 flex items-center gap-2">
+                      <button
+                        onClick={() => onSelectItem(item)}
+                        className="flex-1 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-xs transition"
+                      >
+                        Details
+                      </button>
+                      <button
+                        onClick={() => onSelectMatches(item)}
+                        className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-semibold text-xs transition"
+                        title="Run AI match engine against opposing reports"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                        <span>AI Matches</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* Pagination controls */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-200 dark:border-slate-800">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Showing <strong className="text-slate-800 dark:text-slate-200">{startIndex + 1}</strong>–
+                <strong className="text-slate-800 dark:text-slate-200">{Math.min(startIndex + pageSize, items.length)}</strong> of{' '}
+                <strong className="text-slate-800 dark:text-slate-200">{items.length}</strong> reports
+              </p>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                  aria-label="Previous Page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-8 h-8 rounded-xl text-xs font-bold transition ${
+                      currentPage === pageNum
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                  aria-label="Next Page"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
-            );
-          })}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 };
+

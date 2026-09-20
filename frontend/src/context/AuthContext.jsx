@@ -59,7 +59,11 @@ async function callCognito(target, payload) {
 // Clean up any legacy or demo localStorage keys on module execution
 try {
   localStorage.removeItem('campusfind_user');
+  localStorage.removeItem('campusfind_id_token');
+  localStorage.removeItem('campusfind_access_token');
+  localStorage.removeItem('campusfind_refresh_token');
   localStorage.removeItem('findit_user');
+  localStorage.removeItem('findit_id_token');
 } catch (e) {
   /* ignore */
 }
@@ -90,28 +94,23 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (idToken) {
       sessionStorage.setItem('findit_session_id_token', idToken);
-      localStorage.setItem('campusfind_id_token', idToken);
     } else {
       sessionStorage.removeItem('findit_session_id_token');
-      localStorage.removeItem('campusfind_id_token');
     }
 
     if (accessToken) {
       sessionStorage.setItem('findit_session_access_token', accessToken);
-      localStorage.setItem('campusfind_access_token', accessToken);
     } else {
       sessionStorage.removeItem('findit_session_access_token');
-      localStorage.removeItem('campusfind_access_token');
     }
 
     if (refreshToken) {
       sessionStorage.setItem('findit_session_refresh_token', refreshToken);
-      localStorage.setItem('campusfind_refresh_token', refreshToken);
     } else {
       sessionStorage.removeItem('findit_session_refresh_token');
-      localStorage.removeItem('campusfind_refresh_token');
     }
   }, [idToken, accessToken, refreshToken]);
+
 
   // Check token expiration periodically or on mount
   useEffect(() => {

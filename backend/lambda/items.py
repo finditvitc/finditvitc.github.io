@@ -156,15 +156,28 @@ def handle_list_items(query_params: Dict[str, str], table) -> Dict[str, Any]:
 
         items = response.get('Items', [])
         
-        # In-memory search filtering for fuzzy matching across title, desc, ai_tags, location
+        # Location filtering with robust full-text & building name matching
+        if location and location.lower() != 'all':
+            loc_clean = location.lower().strip()
+            loc_filtered = []
+            for it in items:
+                it_loc = it.get('location', '').lower().strip()
+                if it_loc == loc_clean or loc_clean in it_loc or it_loc in loc_clean:
+                    loc_filtered.append(it)
+            items = loc_filtered
+
+        # Multi-word tokenized search filtering across title, desc, category, ai_tags, location
         if search:
+            search_tokens = [w for w in search.split() if w]
             filtered = []
             for it in items:
                 title = it.get('title', '').lower()
                 desc = it.get('description', '').lower()
                 loc = it.get('location', '').lower()
+                cat = it.get('category', '').lower()
                 tags = [t.lower() for t in it.get('ai_tags', [])]
-                if (search in title or search in desc or search in loc or any(search in t for t in tags)):
+                all_text = f"{title} {desc} {loc} {cat} {' '.join(tags)}"
+                if all(tok in all_text for tok in search_tokens):
                     filtered.append(it)
             items = filtered
 
@@ -175,6 +188,7 @@ def handle_list_items(query_params: Dict[str, str], table) -> Dict[str, Any]:
         # Sort by createdAt descending
         items.sort(key=lambda x: x.get('createdAt', ''), reverse=True)
         return build_cors_response(200, {'items': items, 'count': len(items)})
+
 
     except Exception as e:
         logger.error(f"Error querying items: {e}")

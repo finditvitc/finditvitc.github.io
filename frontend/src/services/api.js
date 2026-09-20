@@ -11,13 +11,51 @@ const BASE_URL = import.meta.env.VITE_API_URL || LIVE_AWS_API_GATEWAY;
 const isAws = BASE_URL.includes('amazonaws.com') || !!import.meta.env.VITE_API_URL;
 const PREFIX = isAws ? '' : '/api';
 
-async function request(endpoint, options = {}) {
+const COGNITO_REGION = import.meta.env.VITE_AWS_REGION || 'ap-south-1';
+const COGNITO_CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || '5068gn9iktlj9670vdntdn125m';
+const COGNITO_ENDPOINT = `https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`;
+
+async function silentRefreshCognitoToken() {
+  const refreshToken = sessionStorage.getItem('findit_session_refresh_token');
+  if (!refreshToken) return null;
+
+  try {
+    const res = await fetch(COGNITO_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-amz-json-1.1',
+        'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth'
+      },
+      body: JSON.stringify({
+        AuthFlow: 'REFRESH_TOKEN_AUTH',
+        ClientId: COGNITO_CLIENT_ID,
+        AuthParameters: {
+          REFRESH_TOKEN: refreshToken
+        }
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.AuthenticationResult) {
+      const newIdToken = data.AuthenticationResult.IdToken;
+      const newAccessToken = data.AuthenticationResult.AccessToken;
+      sessionStorage.setItem('findit_session_id_token', newIdToken);
+      if (newAccessToken) sessionStorage.setItem('findit_session_access_token', newAccessToken);
+      return newIdToken;
+    }
+  } catch (e) {
+    console.warn('Silent refresh error in API client:', e);
+  }
+  return null;
+}
+
+async function request(endpoint, options = {}, isRetry = false) {
   if (!BASE_URL) {
     throw new Error('Static host mode');
   }
 
   const url = `${BASE_URL}${endpoint}`;
-  const idToken = sessionStorage.getItem('findit_session_id_token') || localStorage.getItem('campusfind_id_token') || localStorage.getItem('findit_id_token');
+  const idToken = sessionStorage.getItem('findit_session_id_token') || '';
   
   const headers = {
     ...(options.body ? { 'Content-Type': 'application/json' } : {}),
@@ -28,6 +66,14 @@ async function request(endpoint, options = {}) {
   try {
     const res = await fetch(url, { ...options, headers });
     if (!res.ok) {
+      if (res.status === 401 && !isRetry) {
+        // Attempt silent token refresh via Cognito REFRESH_TOKEN_AUTH
+        const refreshedToken = await silentRefreshCognitoToken();
+        if (refreshedToken) {
+          return await request(endpoint, options, true);
+        }
+      }
+
       const errorData = await res.json().catch(() => ({}));
       const err = new Error(errorData.detail || errorData.error || `HTTP error ${res.status}`);
       err.status = res.status;
@@ -36,11 +82,12 @@ async function request(endpoint, options = {}) {
     return await res.json();
   } catch (err) {
     if (err.status !== 404) {
-      console.warn(`API network notice on [${options.method || 'GET'} ${url}], using resilient client fallback:`, err.message);
+      console.warn(`API network notice on [${options.method || 'GET'} ${url}]:`, err.message);
     }
     throw err;
   }
 }
+
 
 export const api = {
   // Items API
@@ -238,20 +285,25 @@ export const api = {
         });
 
         if (presignRes.uploadUrl) {
-          fetch(presignRes.uploadUrl, {
-            method: 'PUT',
-            headers: { 'Content-Type': file.type || 'image/jpeg' },
-            body: file,
-          }).catch(e => console.warn('S3 direct PUT warning:', e));
+          try {
+            await fetch(presignRes.uploadUrl, {
+              method: 'PUT',
+              headers: { 'Content-Type': file.type || 'image/jpeg' },
+              body: file,
+            });
+          } catch (e) {
+            console.warn('S3 direct PUT notice, falling back to uploaded key:', e);
+          }
         }
 
         return {
-          photoUrl: base64Data || presignRes.photoUrl,
+          photoUrl: presignRes.photoUrl || presignRes.s3Key || base64Data,
           filename: file.name,
           ai_tags: presignRes.ai_tags || [],
           detected_labels: presignRes.detected_labels || [],
           dominant_colors: presignRes.dominant_colors || []
         };
+
       } catch (awsUploadErr) {
         console.warn('AWS Presign upload error:', awsUploadErr);
       }
