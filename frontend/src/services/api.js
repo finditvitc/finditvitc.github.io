@@ -459,6 +459,34 @@ export const api = {
     }
   },
 
+  async terminateAlert(alertId = 'all', resolvedBy = '') {
+    let sessionUser = null;
+    try {
+      const userStr = sessionStorage.getItem('findit_session_user');
+      if (userStr) sessionUser = JSON.parse(userStr);
+    } catch (_) {}
+
+    const payload = {
+      action: 'terminate',
+      id: alertId,
+      terminateAll: alertId === 'all',
+      resolvedBy: resolvedBy || sessionUser?.name || sessionUser?.email || 'Campus Safety Dispatch',
+      userEmail: sessionUser?.email
+    };
+
+    try {
+      const res = await request(`${PREFIX}/alerts`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      clientStore.terminateAlert(alertId);
+      return res;
+    } catch (err) {
+      console.warn('API terminateAlert notice, falling back to local resilient store:', err.message);
+      return clientStore.terminateAlert(alertId);
+    }
+  },
+
   async subscribeAlert(endpoint, protocol = 'email') {
     try {
       return await request(`${PREFIX}/alerts/subscribe`, {

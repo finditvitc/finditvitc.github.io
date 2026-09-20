@@ -10,11 +10,11 @@ const SEED_ALERTS = [
   {
     id: "alert-seed-1",
     title: "Severe Thunderstorm & High Wind Advisory",
-    message: "The National Weather Service has issued a severe weather warning for our county until 8:00 PM. High winds and sudden hail possible. Seek indoor shelter immediately and avoid open athletic fields.",
+    message: "The National Weather Service has issued a severe weather warning for our county. High winds and sudden rain possible. Seek indoor shelter immediately and avoid open athletic fields.",
     severity: "warning",
     zone: "Entire Campus",
-    channels: ["sms", "email", "in_app"],
-    active: true,
+    channels: ["email", "in_app"],
+    active: false,
     senderName: "Campus Police Emergency Dispatch",
     senderEmail: "emergency@campus.edu",
     snsMessageId: "sns-client-7891234",
@@ -285,7 +285,7 @@ export const clientStore = {
       message: (alertData.message || '').trim(),
       severity: (alertData.severity || 'warning').toLowerCase().trim(),
       zone: (alertData.zone || 'Entire Campus').trim(),
-      channels: alertData.channels || ['sms', 'email', 'in_app'],
+      channels: alertData.channels || ['email', 'in_app'],
       active: true,
       senderName: alertData.senderName || 'Campus Safety Dispatch',
       senderEmail: alertData.senderEmail || 'security@campus.edu',
@@ -298,6 +298,31 @@ export const clientStore = {
     return {
       message: 'Emergency alert successfully broadcasted across campus channels!',
       alert: newAlert
+    };
+  },
+
+  terminateAlert(alertId) {
+    const db = getLocalData();
+    const nowIso = new Date().toISOString();
+    if (!alertId || alertId === 'all') {
+      db.alerts.forEach(a => {
+        if (a.active) {
+          a.active = false;
+          a.resolvedAt = nowIso;
+        }
+      });
+    } else {
+      const target = db.alerts.find(a => a.id === alertId);
+      if (target) {
+        target.active = false;
+        target.resolvedAt = nowIso;
+      }
+    }
+    saveLocalData(db);
+    return {
+      message: 'Emergency alert terminated successfully',
+      id: alertId,
+      active: false
     };
   },
 

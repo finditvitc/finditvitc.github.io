@@ -34,11 +34,11 @@ export const AWSArchitectureModal = ({ isOpen, onClose }) => {
       desc: 'Stores CampusFind-Items (GSI on type and createdAt for sub-second feed lookups), CampusFind-Alerts, and subscriber registries.'
     },
     {
-      name: 'Amazon SNS',
+      name: 'Amazon SNS & SES',
       icon: Bell,
       color: 'text-purple-500 bg-purple-50 border-purple-200',
-      role: 'Emergency Broadcast & Push',
-      desc: 'Publishes instant emergency broadcasts via SMS and email fan-out to all registered students, plus automated "Match Found" notifications.'
+      role: 'Emergency Broadcast & Email Dispatch',
+      desc: 'Publishes instant emergency broadcasts via verified email fan-out and real-time in-app banner push to all registered students.'
     },
     {
       name: 'Amazon API Gateway',

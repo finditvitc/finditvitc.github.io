@@ -289,6 +289,68 @@ def handle_subscribe_student(body_data: Dict[str, Any]) -> Dict[str, Any]:
         logger.error(f"SNS subscribe failed: {e}")
         return build_cors_response(500, {'error': str(e)})
 
+def handle_terminate_alert(body_data: Dict[str, Any], event: Dict[str, Any], table) -> Dict[str, Any]:
+    """Admin endpoint to stand-down and terminate active emergency alerts."""
+    if not is_admin_or_security(event, body_data):
+        return build_cors_response(403, {
+            'error': 'Unauthorized: Only users in the Admin or Security group can terminate emergency alerts.'
+        })
+
+    alert_id = str(body_data.get('id', '')).strip()
+    terminate_all = body_data.get('terminateAll', False) or alert_id.lower() == 'all'
+    now_iso = datetime.now(timezone.utc).isoformat()
+    resolved_by = str(body_data.get('resolvedBy', 'Campus Safety Administration')).strip()
+
+    if terminate_all or not alert_id:
+        try:
+            res = table.scan()
+            items = res.get('Items', [])
+            updated_count = 0
+            for item in items:
+                if item.get('active', False):
+                    table.update_item(
+                        Key={'id': item['id']},
+                        UpdateExpression="SET #act = :val, resolvedAt = :res, resolvedBy = :by",
+                        ExpressionAttributeNames={'#act': 'active'},
+                        ExpressionAttributeValues={
+                            ':val': False,
+                            ':res': now_iso,
+                            ':by': resolved_by
+                        }
+                    )
+                    updated_count += 1
+            logger.info(f"Terminated all active alerts ({updated_count} records updated)")
+            return build_cors_response(200, {
+                'message': f"All active emergency alerts ({updated_count}) have been stood down and terminated.",
+                'terminatedCount': updated_count
+            })
+        except Exception as e:
+            logger.error(f"Failed to terminate all alerts: {e}")
+            return build_cors_response(500, {'error': str(e)})
+
+    try:
+        table.update_item(
+            Key={'id': alert_id},
+            UpdateExpression="SET #act = :val, resolvedAt = :res, resolvedBy = :by",
+            ExpressionAttributeNames={'#act': 'active'},
+            ExpressionAttributeValues={
+                ':val': False,
+                ':res': now_iso,
+                ':by': resolved_by
+            }
+        )
+        logger.info(f"Alert {alert_id} terminated by {resolved_by}")
+        return build_cors_response(200, {
+            'message': 'Emergency alert successfully terminated and stood down.',
+            'id': alert_id,
+            'active': False,
+            'resolvedAt': now_iso,
+            'resolvedBy': resolved_by
+        })
+    except Exception as e:
+        logger.error(f"Failed to terminate alert {alert_id}: {e}")
+        return build_cors_response(500, {'error': str(e)})
+
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """API Gateway Lambda entry point for /alerts."""
     http_method = event.get('httpMethod', 'GET')
@@ -313,14 +375,22 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     if http_method == 'GET':
         return handle_list_alerts(table)
-    elif http_method == 'POST':
+    elif http_method in ['POST', 'PATCH', 'PUT', 'DELETE']:
         # BUG-08: Safe JSON parsing
         try:
             body_data = json.loads(event.get('body') or '{}')
             if not isinstance(body_data, dict):
-                return build_cors_response(400, {'error': 'Invalid request body: expected JSON object'})
+                body_data = {}
         except (json.JSONDecodeError, TypeError):
+            body_data = {}
+
+        if '/terminate' in path or body_data.get('action') == 'terminate' or http_method in ['PATCH', 'PUT', 'DELETE']:
+            return handle_terminate_alert(body_data, event, table)
+
+        if not body_data:
             return build_cors_response(400, {'error': 'Invalid JSON in request body'})
+
         return handle_create_alert(body_data, event, table)
 
     return build_cors_response(405, {'error': f"Method {http_method} not allowed on {path}"})
+

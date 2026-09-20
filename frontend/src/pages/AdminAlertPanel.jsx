@@ -12,7 +12,8 @@ import {
   Lock, 
   UserCheck,
   ShieldCheck,
-  Info
+  Info,
+  PowerOff
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -95,6 +96,9 @@ export const AdminAlertPanel = () => {
   const [subscribeEndpoint, setSubscribeEndpoint] = useState('');
   const [subMsg, setSubMsg] = useState('');
 
+  // Termination state
+  const [terminatingId, setTerminatingId] = useState(null);
+
   useEffect(() => {
     loadAlerts();
   }, []);
@@ -108,6 +112,26 @@ export const AdminAlertPanel = () => {
       console.error('Error fetching alerts:', err);
     } finally {
       setLoadingAlerts(false);
+    }
+  };
+
+  const handleTerminateAlert = async (alertId, alertTitle) => {
+    const isAll = alertId === 'all';
+    const confirmMsg = isAll
+      ? 'Stand down ALL active campus emergency alerts?\n\nThis will immediately remove active banners across all student screens and mark alerts as resolved in DynamoDB.'
+      : `Stand down emergency alert: "${alertTitle}"?\n\nThis will immediately remove the emergency banner for all campus users.`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setTerminatingId(alertId);
+    setError('');
+    try {
+      await api.terminateAlert(alertId, currentUser?.name || currentUser?.email || 'Campus Security Dispatch');
+      await loadAlerts();
+    } catch (err) {
+      setError(`Failed to terminate alert: ${err.message}`);
+    } finally {
+      setTerminatingId(null);
     }
   };
 
@@ -439,7 +463,7 @@ export const AdminAlertPanel = () => {
             </form>
           </div>
 
-          {/* Audit Log */}
+          {/* Audit Log & Active Emergency Controls */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
@@ -449,6 +473,35 @@ export const AdminAlertPanel = () => {
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{alerts.length} records</span>
             </div>
 
+            {/* Active Emergency Summary Banner */}
+            {alerts.filter(a => a.active).length > 0 && (
+              <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-800 space-y-2.5 font-body animate-fadeIn">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
+                    </span>
+                    <span className="text-xs font-headline font-black text-red-900 dark:text-red-200 uppercase tracking-wider">
+                      {alerts.filter(a => a.active).length} Active {alerts.filter(a => a.active).length === 1 ? 'Emergency' : 'Emergencies'} Live
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleTerminateAlert('all')}
+                    disabled={terminatingId === 'all'}
+                    className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-xl text-[11px] font-headline font-bold shadow-sm transition flex items-center gap-1.5"
+                    title="Stand down and remove all active alert banners"
+                  >
+                    <PowerOff className="w-3 h-3" />
+                    <span>{terminatingId === 'all' ? 'Ending All...' : 'Stand Down All'}</span>
+                  </button>
+                </div>
+                <p className="text-[11px] text-red-700 dark:text-red-300 leading-snug">
+                  Active alerts are pinned to the global header banner for all students. Click <strong>Terminate</strong> below to stand down an incident.
+                </p>
+              </div>
+            )}
+
             {loadingAlerts ? (
               <div className="py-8 text-center text-xs text-slate-400 font-body">Loading broadcast logs...</div>
             ) : alerts.length === 0 ? (
@@ -457,17 +510,34 @@ export const AdminAlertPanel = () => {
               <div className="space-y-3 max-h-96 overflow-y-auto pr-1 scrollbar-thin">
                 {alerts.map((al) => {
                   const isCrit = al.severity === 'critical';
+                  const isTerminating = terminatingId === al.id;
                   return (
                     <div
                       key={al.id}
-                      className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/70 space-y-2"
+                      className={`p-4 rounded-2xl border transition space-y-2.5 ${
+                        al.active
+                          ? 'border-red-400 dark:border-red-600 bg-red-50/50 dark:bg-red-950/40 shadow-sm ring-1 ring-red-400/30'
+                          : 'border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/70'
+                      }`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded text-white ${
-                          isCrit ? 'bg-red-600' : 'bg-amber-600'
-                        }`}>
-                          {al.severity}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded text-white ${
+                            isCrit ? 'bg-red-600' : 'bg-amber-600'
+                          }`}>
+                            {al.severity}
+                          </span>
+                          {al.active ? (
+                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-red-600/20 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                              Live Active
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-medium uppercase px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                              Resolved
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[11px] text-slate-500 dark:text-slate-400">
                           {new Date(al.createdAt).toLocaleString(undefined, {
                             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -480,12 +550,24 @@ export const AdminAlertPanel = () => {
                         {al.message}
                       </p>
 
-                      <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1.5 border-t border-slate-200 dark:border-slate-700/60 font-body">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 pt-1.5 border-t border-slate-200 dark:border-slate-700/60 font-body">
                         <span>Zone: <strong className="text-slate-700 dark:text-slate-300">{al.zone}</strong></span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>Delivered (SNS / SES)</span>
-                        </span>
+                        
+                        {al.active ? (
+                          <button
+                            onClick={() => handleTerminateAlert(al.id, al.title)}
+                            disabled={isTerminating}
+                            className="px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white font-headline font-bold text-[11px] flex items-center gap-1 shadow-xs transition"
+                            title="Stand down this emergency alert"
+                          >
+                            <PowerOff className="w-3 h-3" />
+                            <span>{isTerminating ? 'Ending...' : 'Terminate Alert'}</span>
+                          </button>
+                        ) : (
+                          <span className="text-slate-500 dark:text-slate-400 italic text-[10px]">
+                            {al.resolvedAt ? `Stood down on ${new Date(al.resolvedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Delivered (SNS / SES)'}
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
