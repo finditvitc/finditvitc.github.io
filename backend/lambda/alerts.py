@@ -134,6 +134,51 @@ def broadcast_to_sns(alert_data: Dict[str, Any]) -> Dict[str, Any]:
         logger.error(f"SNS publish failed: {e}")
         return {'error': str(e), 'simulated': True, 'messageId': f"fallback-{uuid.uuid4()}"}
 
+def send_ses_alert_email(alert_data: Dict[str, Any]) -> None:
+    """Send direct SES email notifications to registered admin and campus recipients."""
+    try:
+        ses = boto3.client('ses', region_name=AWS_REGION)
+        severity = alert_data.get('severity', 'info').upper()
+        title = alert_data.get('title', 'Campus Emergency Alert')
+        message = alert_data.get('message', '')
+        zone = alert_data.get('zone', 'Campus-Wide')
+        
+        subject = f"[{severity}] VIT Chennai Emergency Alert: {title}"[:100]
+        body = (
+            f"*** VIT CHENNAI - CAMPUS EMERGENCY BROADCAST ***\n\n"
+            f"ALERT LEVEL: {severity}\n"
+            f"AFFECTED LOCATION: {zone}\n"
+            f"BROADCAST TIME: {alert_data.get('createdAt')}\n\n"
+            f"ALERT TITLE: {title}\n\n"
+            f"DETAILS:\n{message}\n\n"
+            f"SAFETY INSTRUCTIONS:\n"
+            f"Please remain vigilant and follow on-site campus safety protocols.\n\n"
+            f"CAMPUS EMERGENCY CONTACTS:\n"
+            f"- VIT Chennai Security Control Room: 044-3993 1555 / 100\n"
+            f"- Campus Medical Health Centre: 044-3993 1111\n"
+            f"- FindIt VITC Safety Portal: https://finditvitc.github.io\n\n"
+            f"— FindIt VITC Emergency Broadcast System"
+        )
+        
+        recipients = ['jerisheugin2567@gmail.com', 'jerish.e2024@vitstudent.ac.in']
+        ses_from = os.environ.get('SES_SENDER_EMAIL', 'jerisheugin2567@gmail.com')
+        
+        for recipient in recipients:
+            try:
+                ses.send_email(
+                    Source=ses_from,
+                    Destination={'ToAddresses': [recipient]},
+                    Message={
+                        'Subject': {'Data': subject, 'Charset': 'UTF-8'},
+                        'Body': {'Text': {'Data': body, 'Charset': 'UTF-8'}}
+                    }
+                )
+                logger.info(f"Direct SES alert email dispatched to {recipient}")
+            except Exception as ses_err:
+                logger.info(f"SES alert delivery note for {recipient}: {ses_err}")
+    except Exception as e:
+        logger.warning(f"Could not initialize SES alert client: {e}")
+
 def handle_create_alert(body_data: Dict[str, Any], event: Dict[str, Any], table) -> Dict[str, Any]:
     """Admin endpoint to create & broadcast an emergency alert with idempotency protection (BUG-05, BUG-15)."""
     if not is_admin_or_security(event, body_data):
@@ -145,7 +190,7 @@ def handle_create_alert(body_data: Dict[str, Any], event: Dict[str, Any], table)
     message = str(body_data.get('message', '')).strip()
     severity = str(body_data.get('severity', 'warning')).lower().strip()
     zone = str(body_data.get('zone', 'Campus-Wide')).strip()
-    channels = body_data.get('channels', ['sms', 'email', 'in_app'])
+    channels = body_data.get('channels', ['email', 'in_app'])
 
     if not title or not message:
         return build_cors_response(400, {'error': 'Title and message are required for emergency alerts.'})
@@ -187,6 +232,10 @@ def handle_create_alert(body_data: Dict[str, Any], event: Dict[str, Any], table)
     new_alert['snsMessageId'] = sns_result.get('messageId')
     new_alert['broadcastStatus'] = 'delivered' if not sns_result.get('error') else 'partial_delivered'
 
+    # Direct email dispatch via Amazon SES when email channel selected
+    if 'email' in channels:
+        send_ses_alert_email(new_alert)
+
     # Save to DynamoDB
     try:
         table.put_item(Item=new_alert)
@@ -197,6 +246,7 @@ def handle_create_alert(body_data: Dict[str, Any], event: Dict[str, Any], table)
     except Exception as e:
         logger.error(f"Failed to persist alert in DynamoDB: {e}")
         return build_cors_response(500, {'error': str(e)})
+
 
 def handle_list_alerts(table) -> Dict[str, Any]:
     """Retrieve all alerts for frontend banner and history."""
