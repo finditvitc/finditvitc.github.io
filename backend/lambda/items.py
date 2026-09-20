@@ -12,6 +12,7 @@ import os
 import json
 import uuid
 import logging
+import urllib.parse
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from typing import Dict, Any, List
@@ -411,6 +412,87 @@ def handle_get_matches(item_id: str, table) -> Dict[str, Any]:
         logger.error(f"Error computing matches for {item_id}: {e}")
         return build_cors_response(500, {'error': str(e)})
 
+def handle_notify_match(body_data: Dict[str, Any], event: Dict[str, Any], table) -> Dict[str, Any]:
+    """
+    Automated Notification Dispatcher for Item Match & Claim requests.
+    Attempts automated Amazon SES delivery to both the finder and seeker,
+    and returns rich mailto payload for instant client fallback.
+    """
+    try:
+        user = get_user_from_event(event)
+        sender_email = body_data.get('senderEmail') or user.get('email', '')
+        sender_name = body_data.get('senderName') or user.get('name', 'VIT Chennai Student')
+        
+        target_title = body_data.get('targetTitle', 'Reported Item')
+        match_title = body_data.get('matchTitle', 'Matching Item')
+        recipient_email = body_data.get('recipientEmail', '')
+        match_location = body_data.get('matchLocation', 'Campus')
+        match_category = body_data.get('matchCategory', '')
+        score = body_data.get('matchScore', 0)
+        custom_message = body_data.get('message', '').strip()
+
+        if not recipient_email:
+            return build_cors_response(400, {'error': 'Recipient email is required for match notification'})
+
+        subject = f"[FindIt VITC] Lost & Found Match Claim: {match_title}"
+        body_text = (
+            f"Hello,\n\n"
+            f"This is an automated notification from FindIt VITC (VIT Chennai Lost & Found Grid).\n\n"
+            f"{sender_name} ({sender_email}) has flagged a high-confidence match ({score}%) for the report \"{match_title}\" ({match_category}) located near {match_location}.\n\n"
+            f"Their reported item: \"{target_title}\"\n"
+            f"Claimant Contact: {sender_email}\n"
+        )
+        if custom_message:
+            body_text += f"Note from claimant: \"{custom_message}\"\n\n"
+        body_text += (
+            f"Please coordinate directly with {sender_name} at {sender_email} to verify ownership and arrange handover at a safe campus location (e.g. Admin Block / Security Desk).\n\n"
+            f"— FindIt VITC Campus Safety Grid"
+        )
+
+        ses_sent = False
+        ses_error = None
+        try:
+            ses_client = boto3.client('ses', region_name=AWS_REGION)
+            ses_from = os.environ.get('SES_SENDER_EMAIL', 'jerisheugin2567@gmail.com')
+            ses_client.send_email(
+                Source=ses_from,
+                Destination={
+                    'ToAddresses': [recipient_email],
+                    'CcAddresses': [sender_email] if sender_email and sender_email != recipient_email else []
+                },
+                Message={
+                    'Subject': {'Data': subject, 'Charset': 'UTF-8'},
+                    'Body': {'Text': {'Data': body_text, 'Charset': 'UTF-8'}}
+                }
+            )
+            ses_sent = True
+            logger.info(f"SES match email sent successfully to {recipient_email}")
+        except Exception as e:
+            ses_error = str(e)
+            logger.info(f"SES delivery note (e.g. sandbox or unverified identity): {ses_error}")
+
+        mailto_link = (
+            f"mailto:{recipient_email}"
+            f"?cc={sender_email}"
+            f"&subject={urllib.parse.quote(subject)}"
+            f"&body={urllib.parse.quote(body_text)}"
+        )
+
+        return build_cors_response(200, {
+            'success': True,
+            'message': f"Match notification ping processed for {recipient_email}",
+            'recipientEmail': recipient_email,
+            'senderEmail': sender_email,
+            'subject': subject,
+            'body': body_text,
+            'mailtoLink': mailto_link,
+            'sesSent': ses_sent,
+            'sesNote': ses_error
+        })
+    except Exception as e:
+        logger.error(f"Error handling match notification: {e}")
+        return build_cors_response(500, {'error': str(e)})
+
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """Main API Gateway Lambda router."""
     http_method = event.get('httpMethod', 'GET')
@@ -424,13 +506,23 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     table = get_dynamodb_table()
 
+    # Route: POST /items/notify-match or /items/notify-claim
+    if ('/notify-match' in path or '/notify-claim' in path) and http_method == 'POST':
+        try:
+            body_data = json.loads(event.get('body') or '{}')
+            if not isinstance(body_data, dict):
+                body_data = {}
+        except Exception:
+            body_data = {}
+        return handle_notify_match(body_data, event, table)
+
     # Route: GET /items/{id}/matches
     if '/matches' in path:
         item_id = path_params.get('id') or path.split('/')[2]
         return handle_get_matches(item_id, table)
 
     # Route: GET/PATCH/DELETE /items/{id}
-    if path_params.get('id') or (len(path.strip('/').split('/')) == 2 and path.strip('/').split('/')[1] != 'items'):
+    if path_params.get('id') or (len(path.strip('/').split('/')) == 2 and path.strip('/').split('/')[1] not in ('items', 'notify-match', 'notify-claim')):
         item_id = path_params.get('id') or path.strip('/').split('/')[1]
         if http_method == 'GET':
             return handle_get_item(item_id, table)
@@ -460,3 +552,4 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return handle_create_item(body_data, event, table)
 
     return build_cors_response(405, {'error': f"Method {http_method} not allowed on {path}"})
+

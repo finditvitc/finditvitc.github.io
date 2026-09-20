@@ -177,6 +177,38 @@ export const api = {
     }
   },
 
+  async notifyMatch(notificationData) {
+    try {
+      const res = await request(`${PREFIX}/items/notify-match`, {
+        method: 'POST',
+        body: JSON.stringify(notificationData)
+      });
+      if (res && res.success) {
+        return res;
+      }
+    } catch (err) {
+      console.warn('API notifyMatch network notice, generating client mailto fallback:', err.message);
+    }
+
+    const recipient = notificationData.recipientEmail || '';
+    const sender = notificationData.senderEmail || '';
+    const subject = `[FindIt VITC] Lost & Found Match Claim: ${notificationData.matchTitle || 'Item'}`;
+    const body = `Hello,\n\nI am contacting you regarding the item "${notificationData.matchTitle}" reported on FindIt VITC.\n\nMy report: "${notificationData.targetTitle || 'Item'}"\nMy contact: ${sender}\n\nLet's coordinate verification and handover!\n\n— FindIt VITC Grid`;
+    const mailto = `mailto:${recipient}?cc=${sender}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    return {
+      success: true,
+      message: `Match notification ping processed for ${recipient}`,
+      recipientEmail: recipient,
+      senderEmail: sender,
+      subject,
+      body,
+      mailtoLink: mailto,
+      sesSent: false
+    };
+  },
+
+
   // Upload photo & Rekognition Analysis
   async uploadPhoto(file, titleHint = '', category = '', compressedDataUrl = '') {
     // 1. Obtain Base64 Data URL (prefer pre-compressed client canvas data URL)
