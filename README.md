@@ -51,8 +51,8 @@ graph TB
 
     subgraph Notification ["Push & Broadcast"]
         SNSTopic["Amazon SNS Topic<br/>(Campus-Emergency-Alerts)"]
-        SMS["SMS Broadcast"]
-        Email["Email Broadcast"]
+        SES["Amazon SES<br/>(Email Dispatch)"]
+        InApp["In-App Emergency Banner"]
     end
 
     %% Flows
@@ -65,7 +65,7 @@ graph TB
 
     APIGW -->|/items| ItemsFn
     APIGW -->|/uploads/presign| UploadFn
-    APIGW -->|/items/{id}/matches| MatchFn
+    APIGW -->|"/items/{id}/matches"| MatchFn
     APIGW -->|/alerts (Admin only)| AlertsFn
 
     UploadFn -->|Presigned URL| S3Bucket
@@ -78,8 +78,8 @@ graph TB
     MatchFn --> DDBItems
     AlertsFn --> DDBAlerts
     AlertsFn -->|Publish broadcast| SNSTopic
-    SNSTopic --> SMS
-    SNSTopic --> Email
+    SNSTopic --> SES
+    DDBAlerts -.->|Active alert sync| InApp
 ```
 
 ---
