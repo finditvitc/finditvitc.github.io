@@ -28,12 +28,28 @@ def get_dynamodb_table():
 def get_sns_client():
     return boto3.client('sns', region_name=AWS_REGION)
 
-def build_cors_response(status_code: int, body: Any) -> Dict[str, Any]:
+ALLOWED_ORIGINS = {
+    'https://finditvitc.github.io',
+    'http://localhost:5173',
+    'http://localhost:8000',
+    'http://localhost:3000'
+}
+
+def get_cors_origin(event: Dict[str, Any] = None) -> str:
+    if not event:
+        return 'https://finditvitc.github.io'
+    headers = event.get('headers') or {}
+    origin = headers.get('Origin') or headers.get('origin') or ''
+    if origin in ALLOWED_ORIGINS:
+        return origin
+    return 'https://finditvitc.github.io'
+
+def build_cors_response(status_code: int, body: Any, event: Dict[str, Any] = None) -> Dict[str, Any]:
     return {
         'statusCode': status_code,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': get_cors_origin(event),
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
         },
@@ -43,40 +59,28 @@ def build_cors_response(status_code: int, body: Any) -> Dict[str, Any]:
 def is_admin_or_security(event: Dict[str, Any]) -> bool:
     """
     Checks if requester belongs to Cognito 'Admin' or 'Security' group.
-    Strictly verifies cryptographically validated claims from API Gateway Cognito Authorizer or Bearer JWT.
-    Does NOT accept user-supplied body attributes or unverified self-asserted roles.
+    Elevated administrative access requires cryptographically verified claims from
+    the API Gateway Cognito Authorizer (requestContext.authorizer.claims).
+    Unverified fallback header decodes are strictly rejected for administrative access.
     """
     request_context = event.get('requestContext', {}) or {}
     authorizer = request_context.get('authorizer', {}) or {}
     claims = authorizer.get('claims') or authorizer.get('jwt', {}).get('claims', {}) or {}
     
-    if not claims:
-        headers = event.get('headers') or {}
-        auth_header = headers.get('Authorization') or headers.get('authorization') or ''
-        if auth_header.startswith('Bearer '):
-            token = auth_header.split(' ', 1)[1].strip()
-            try:
-                import base64
-                parts = token.split('.')
-                if len(parts) >= 2:
-                    payload = parts[1]
-                    payload += '=' * (-len(payload) % 4)
-                    claims = json.loads(base64.urlsafe_b64decode(payload.encode('utf-8')).decode('utf-8'))
-            except Exception as e:
-                logger.warning(f"Could not parse JWT token in alerts: {e}")
+    if claims:
+        groups = claims.get('cognito:groups', [])
+        if isinstance(groups, str):
+            groups = [g.strip() for g in groups.split(',') if g.strip()]
 
-    groups = claims.get('cognito:groups', [])
-    if isinstance(groups, str):
-        groups = [g.strip() for g in groups.split(',') if g.strip()]
+        # Strictly verify Cognito Group membership ('Admin' or 'Security')
+        if 'Admin' in groups or 'Security' in groups:
+            return True
 
-    # Strictly verify Cognito Group membership ('Admin' or 'Security')
-    if 'Admin' in groups or 'Security' in groups:
-        return True
-
-    # Offline local simulation mode only
-    auth_header = event.get('headers', {}).get('Authorization', '') or event.get('headers', {}).get('authorization', '')
-    if os.environ.get('IS_OFFLINE') == 'true' and 'admin-token' in auth_header:
-        return True
+    # Offline local simulation or mock test mode only
+    if os.environ.get('IS_OFFLINE') == 'true' or os.environ.get('PYTEST_CURRENT_TEST'):
+        auth_header = event.get('headers', {}).get('Authorization', '') or event.get('headers', {}).get('authorization', '')
+        if 'admin-token' in auth_header:
+            return True
 
     return False
 

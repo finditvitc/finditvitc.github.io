@@ -35,12 +35,13 @@ import alerts
 def test_rekognition_options_preflight_cors_returns_200_and_headers():
     event = {
         'httpMethod': 'OPTIONS',
-        'path': '/rekognition/analyze'
+        'path': '/rekognition/analyze',
+        'headers': {'Origin': 'https://finditvitc.github.io'}
     }
     response = rekognition_processor.lambda_handler(event, None)
     assert response['statusCode'] == 200
     headers = response.get('headers', {})
-    assert headers.get('Access-Control-Allow-Origin') == '*'
+    assert headers.get('Access-Control-Allow-Origin') == 'https://finditvitc.github.io'
     assert 'OPTIONS' in headers.get('Access-Control-Allow-Methods', '')
     assert 'Authorization' in headers.get('Access-Control-Allow-Headers', '')
 
@@ -49,6 +50,7 @@ def test_rekognition_post_analyze_returns_cors_and_tags():
     event = {
         'httpMethod': 'POST',
         'path': '/rekognition/analyze',
+        'headers': {'Origin': 'http://localhost:5173'},
         'body': json.dumps({
             'title': 'Space Gray MacBook Pro 16 inch',
             'category': 'Electronics',
@@ -58,7 +60,7 @@ def test_rekognition_post_analyze_returns_cors_and_tags():
     response = rekognition_processor.lambda_handler(event, None)
     assert response['statusCode'] == 200
     headers = response.get('headers', {})
-    assert headers.get('Access-Control-Allow-Origin') == '*'
+    assert headers.get('Access-Control-Allow-Origin') == 'http://localhost:5173'
     body = json.loads(response['body'])
     assert 'ai_tags' in body
     assert any('Laptop' in t or 'Computer' in t or 'Electronics' in t for t in body['ai_tags'])

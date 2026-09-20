@@ -2,7 +2,7 @@ import requests
 import base64
 
 def test_vision_pipeline():
-    with open('backend/uploads/3b37d909b562.jpg', 'rb') as f:
+    with open('testdata/ck1.jpg', 'rb') as f:
         img_bytes = f.read()
 
     b64_data = f'data:image/jpeg;base64,{base64.b64encode(img_bytes).decode()}'

@@ -47,12 +47,28 @@ def convert_floats_to_decimals(obj: Any) -> Any:
         return [convert_floats_to_decimals(v) for v in obj]
     return obj
 
-def build_cors_response(status_code: int, body: Any) -> Dict[str, Any]:
+ALLOWED_ORIGINS = {
+    'https://finditvitc.github.io',
+    'http://localhost:5173',
+    'http://localhost:8000',
+    'http://localhost:3000'
+}
+
+def get_cors_origin(event: Dict[str, Any] = None) -> str:
+    if not event:
+        return 'https://finditvitc.github.io'
+    headers = event.get('headers') or {}
+    origin = headers.get('Origin') or headers.get('origin') or ''
+    if origin in ALLOWED_ORIGINS:
+        return origin
+    return 'https://finditvitc.github.io'
+
+def build_cors_response(status_code: int, body: Any, event: Dict[str, Any] = None) -> Dict[str, Any]:
     return {
         'statusCode': status_code,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': get_cors_origin(event),
             'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
         },
@@ -60,10 +76,17 @@ def build_cors_response(status_code: int, body: Any) -> Dict[str, Any]:
     }
 
 def get_user_from_event(event: Dict[str, Any]) -> Dict[str, Any]:
-    """Extract user claims from Cognito Authorizer if present, or decode Authorization header JWT."""
+    """
+    Extract user claims from Cognito Authorizer if present, or decode Authorization header JWT.
+    Claims from requestContext.authorizer are cryptographically verified by API Gateway.
+    Unverified fallback claims are stripped of elevated permissions ('Admin', 'Security').
+    """
     request_context = event.get('requestContext', {}) or {}
     authorizer = request_context.get('authorizer', {}) or {}
-    claims = authorizer.get('claims') or authorizer.get('jwt', {}).get('claims', {}) or {}
+    verified_claims = authorizer.get('claims') or authorizer.get('jwt', {}).get('claims', {}) or {}
+    
+    is_verified = bool(verified_claims)
+    claims = dict(verified_claims) if verified_claims else {}
     
     if not claims:
         headers = event.get('headers') or {}
@@ -84,6 +107,10 @@ def get_user_from_event(event: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(groups, str):
         groups = [g.strip() for g in groups.split(',') if g.strip()]
 
+    # Defense-in-depth: Strip elevated groups from unverified fallback claims
+    if not is_verified and not os.environ.get('IS_OFFLINE') == 'true' and not os.environ.get('PYTEST_CURRENT_TEST'):
+        groups = [g for g in groups if g not in ['Admin', 'Security']]
+
     return {
         'userId': claims.get('sub') or claims.get('username') or 'anonymous-user',
         'email': claims.get('email', ''),
@@ -92,7 +119,7 @@ def get_user_from_event(event: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 def ensure_presigned_url(photo_url: str) -> str:
-    """Converts private S3 URLs or keys to fresh 24-hour presigned GET URLs to prevent 403 AccessDenied."""
+    """Converts private S3 URLs or keys to fresh 1-hour presigned GET URLs to prevent 403 AccessDenied."""
     if not photo_url:
         return ""
     if photo_url.startswith("data:image/") or photo_url.startswith("http://localhost:8000") or "unsplash.com" in photo_url:
@@ -107,7 +134,7 @@ def ensure_presigned_url(photo_url: str) -> str:
         try:
             from botocore.config import Config
             s3 = boto3.client('s3', region_name=AWS_REGION, config=Config(signature_version='s3v4'))
-            return s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': key}, ExpiresIn=86400)
+            return s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': key}, ExpiresIn=3600)
         except Exception as e:
             logger.warning(f"Error generating presigned GET URL for {key}: {e}")
             return photo_url

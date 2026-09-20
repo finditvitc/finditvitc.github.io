@@ -33,12 +33,28 @@ def get_s3_client():
         config=Config(signature_version='s3v4')
     )
 
-def build_cors_response(status_code: int, body: Any) -> Dict[str, Any]:
+ALLOWED_ORIGINS = {
+    'https://finditvitc.github.io',
+    'http://localhost:5173',
+    'http://localhost:8000',
+    'http://localhost:3000'
+}
+
+def get_cors_origin(event: Dict[str, Any] = None) -> str:
+    if not event:
+        return 'https://finditvitc.github.io'
+    headers = event.get('headers') or {}
+    origin = headers.get('Origin') or headers.get('origin') or ''
+    if origin in ALLOWED_ORIGINS:
+        return origin
+    return 'https://finditvitc.github.io'
+
+def build_cors_response(status_code: int, body: Any, event: Dict[str, Any] = None) -> Dict[str, Any]:
     return {
         'statusCode': status_code,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': get_cors_origin(event),
             'Access-Control-Allow-Methods': 'POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
         },
@@ -50,17 +66,17 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     http_method = event.get('httpMethod', 'POST')
     path = event.get('path', '')
     if http_method == 'OPTIONS':
-        return build_cors_response(200, {'status': 'ok'})
+        return build_cors_response(200, {'status': 'ok'}, event)
 
     if http_method != 'POST':
-        return build_cors_response(405, {'error': 'Method not allowed'})
+        return build_cors_response(405, {'error': 'Method not allowed'}, event)
 
     try:
         body = json.loads(event.get('body') or '{}')
         if not isinstance(body, dict):
-            return build_cors_response(400, {'error': 'Invalid request body: expected JSON object'})
+            return build_cors_response(400, {'error': 'Invalid request body: expected JSON object'}, event)
     except (json.JSONDecodeError, TypeError):
-        return build_cors_response(400, {'error': 'Invalid JSON in request body'})
+        return build_cors_response(400, {'error': 'Invalid JSON in request body'}, event)
 
     # Handle direct text-based Rekognition analysis: POST /rekognition/analyze
     if '/rekognition/analyze' in path or ('description' in body and not body.get('imageBase64') and not body.get('filename')):
@@ -69,12 +85,12 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         description = body.get('description', '')
         if extract_semantic_vision_tags:
             res = extract_semantic_vision_tags(f"{title} {description}", category=category)
-            return build_cors_response(200, res)
+            return build_cors_response(200, res, event)
         return build_cors_response(200, {
             'ai_tags': [category or 'Item'],
             'detected_labels': [{'name': category or 'Item', 'confidence': 90.0}],
             'dominant_colors': []
-        })
+        }, event)
 
     try:
         file_name = body.get('filename', 'photo.jpg')
@@ -109,7 +125,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Bucket': BUCKET_NAME,
                 'Key': unique_key
             },
-            ExpiresIn=86400  # 24 hours
+            ExpiresIn=3600  # 1 hour
         )
 
         ai_tags = []

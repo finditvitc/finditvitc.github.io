@@ -468,12 +468,28 @@ def analyze_image_with_rekognition(bucket: str, key: str, max_labels: int = 20, 
         return {'ai_tags': [], 'detected_labels': [], 'parent_categories': [], 'dominant_colors': [], 'error': str(e)}
 
 
-def build_cors_response(status_code: int, body: Any) -> Dict[str, Any]:
+ALLOWED_ORIGINS = {
+    'https://finditvitc.github.io',
+    'http://localhost:5173',
+    'http://localhost:8000',
+    'http://localhost:3000'
+}
+
+def get_cors_origin(event: Dict[str, Any] = None) -> str:
+    if not event:
+        return 'https://finditvitc.github.io'
+    headers = event.get('headers') or {}
+    origin = headers.get('Origin') or headers.get('origin') or ''
+    if origin in ALLOWED_ORIGINS:
+        return origin
+    return 'https://finditvitc.github.io'
+
+def build_cors_response(status_code: int, body: Any, event: Dict[str, Any] = None) -> Dict[str, Any]:
     return {
         'statusCode': status_code,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': get_cors_origin(event),
             'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Amz-Date, X-Api-Key, X-Amz-Security-Token'
         },
@@ -489,7 +505,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     # Handle API Gateway CORS preflight
     if http_method == 'OPTIONS':
-        return build_cors_response(200, {'status': 'ok'})
+        return build_cors_response(200, {'status': 'ok'}, event)
 
     # Handle API Gateway POST /rekognition/analyze
     if http_method == 'POST':
@@ -497,9 +513,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raw_body = event.get('body') or '{}'
             body_data = json.loads(raw_body)
             if not isinstance(body_data, dict):
-                return build_cors_response(400, {'error': 'Invalid request body: expected JSON object'})
+                return build_cors_response(400, {'error': 'Invalid request body: expected JSON object'}, event)
         except (json.JSONDecodeError, TypeError):
-            return build_cors_response(400, {'error': 'Invalid JSON in request body'})
+            return build_cors_response(400, {'error': 'Invalid JSON in request body'}, event)
 
         title = str(body_data.get('title', '')).strip()
         category = str(body_data.get('category', '')).strip()
@@ -512,13 +528,13 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 clean_b64 = image_base64.split(',')[1] if ',' in image_base64 else image_base64
                 raw_bytes = base64.b64decode(clean_b64)
                 analysis = analyze_image_bytes(raw_bytes, filename_hint=f"{title} {category}", category_hint=category)
-                return build_cors_response(200, analysis)
+                return build_cors_response(200, analysis, event)
             except Exception as e:
                 logger.warning(f"Error processing imageBase64 in analyze: {e}")
 
         # Fallback to semantic extraction
         analysis = extract_semantic_vision_tags(f"{title} {description}", category=category)
-        return build_cors_response(200, analysis)
+        return build_cors_response(200, analysis, event)
 
     # Handle S3 ObjectCreated Events
     logger.info(f"Received Rekognition S3 Event: {json.dumps(event)}")
