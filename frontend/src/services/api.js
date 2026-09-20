@@ -68,30 +68,17 @@ export const api = {
       console.warn('API getItems notice, falling back to local resilient store:', err.message);
     }
 
-    // Merge with client store for 0-latency instant updates and offline resiliency
+    if (remoteSuccess) {
+      // Remote DynamoDB is the single source of truth
+      return { items: remoteItems, count: remoteItems.length };
+    }
+
+    // Fallback to client store only if network is offline/unreachable
     const localRes = clientStore.getItems(params);
     const localItems = localRes.items || [];
-
-    if (!remoteSuccess) {
-      return { items: localItems, count: localItems.length };
-    }
-
-    // Merge remote and local without duplicates (remote takes precedence, newer wins)
-    const itemMap = new Map();
-    for (const item of remoteItems) {
-      if (item && item.id) itemMap.set(item.id, item);
-    }
-    for (const item of localItems) {
-      if (item && item.id && !itemMap.has(item.id)) {
-        itemMap.set(item.id, item);
-      }
-    }
-
-    const merged = Array.from(itemMap.values());
-    merged.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-
-    return { items: merged, count: merged.length };
+    return { items: localItems, count: localItems.length };
   },
+
 
   async getItem(id) {
     try {

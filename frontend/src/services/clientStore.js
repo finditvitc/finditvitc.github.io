@@ -313,6 +313,13 @@ export const clientStore = {
     saveLocalData(db);
   },
 
+  saveRemoteItems(remoteItems) {
+    if (!Array.isArray(remoteItems)) return;
+    const db = getLocalData();
+    db.items = remoteItems;
+    saveLocalData(db);
+  },
+
   clearItems() {
     const db = getLocalData();
     db.items = [];
@@ -320,4 +327,5 @@ export const clientStore = {
     return { success: true };
   }
 };
+
 
