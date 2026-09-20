@@ -56,30 +56,30 @@ graph TB
     end
 
     %% Flows
-    UI -->|Sign In / Get JWT| Cognito
+    UI -->|"Sign In / Get JWT"| Cognito
     Cognito -.-> StudentGroup
     Cognito -.-> AdminGroup
-    UI -->|API Requests with Bearer Token| APIGW
+    UI -->|"API Requests with Bearer Token"| APIGW
     APIGW --> Authorizer
     Authorizer --> Cognito
 
-    APIGW -->|/items| ItemsFn
-    APIGW -->|/uploads/presign| UploadFn
+    APIGW -->|"/items"| ItemsFn
+    APIGW -->|"/uploads/presign"| UploadFn
     APIGW -->|"/items/{id}/matches"| MatchFn
-    APIGW -->|/alerts (Admin only)| AlertsFn
+    APIGW -->|"/alerts (Admin only)"| AlertsFn
 
-    UploadFn -->|Presigned URL| S3Bucket
-    UI -->|Direct Upload Photo| S3Bucket
-    S3Bucket -->|s3:ObjectCreated Trigger| RekogTriggerFn
+    UploadFn -->|"Presigned URL"| S3Bucket
+    UI -->|"Direct Upload Photo"| S3Bucket
+    S3Bucket -->|"s3:ObjectCreated Trigger"| RekogTriggerFn
     RekogTriggerFn --> Rekognition
-    RekogTriggerFn -->|Save AI tags & triggers match| DDBItems
+    RekogTriggerFn -->|"Save AI tags & triggers match"| DDBItems
 
     ItemsFn --> DDBItems
     MatchFn --> DDBItems
     AlertsFn --> DDBAlerts
-    AlertsFn -->|Publish broadcast| SNSTopic
+    AlertsFn -->|"Publish broadcast"| SNSTopic
     SNSTopic --> SES
-    DDBAlerts -.->|Active alert sync| InApp
+    DDBAlerts -.->|"Active alert sync"| InApp
 ```
 
 ---
