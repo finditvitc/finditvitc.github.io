@@ -92,7 +92,7 @@ def get_user_from_event(event: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 def ensure_presigned_url(photo_url: str) -> str:
-    """Converts private S3 URLs or keys to fresh 7-day presigned GET URLs to prevent 403 AccessDenied."""
+    """Converts private S3 URLs or keys to fresh 24-hour presigned GET URLs to prevent 403 AccessDenied."""
     if not photo_url:
         return ""
     if photo_url.startswith("data:image/") or photo_url.startswith("http://localhost:8000") or "unsplash.com" in photo_url:
@@ -107,14 +107,14 @@ def ensure_presigned_url(photo_url: str) -> str:
         try:
             from botocore.config import Config
             s3 = boto3.client('s3', region_name=AWS_REGION, config=Config(signature_version='s3v4'))
-            return s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': key}, ExpiresIn=604800)
+            return s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': key}, ExpiresIn=86400)
         except Exception as e:
             logger.warning(f"Error generating presigned GET URL for {key}: {e}")
             return photo_url
     return photo_url
 
-def handle_list_items(query_params: Dict[str, str], table) -> Dict[str, Any]:
-    """Query items from DynamoDB with flexible filtering and GSI optimization."""
+def handle_list_items(query_params: Dict[str, str], table, event: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Query items from DynamoDB with flexible filtering, GSI optimization, and PII masking."""
     item_type = query_params.get('type')
     category = query_params.get('category')
     location = query_params.get('location')
@@ -181,14 +181,45 @@ def handle_list_items(query_params: Dict[str, str], table) -> Dict[str, Any]:
                     filtered.append(it)
             items = filtered
 
-        # Ensure all S3 images are signed so they render with 200 OK
+        # PII Protection: Mask personal emails and userIds unless requester is item owner or Admin/Security
+        user = get_user_from_event(event) if event else {'userId': 'anonymous-user', 'email': '', 'groups': []}
+        caller_id = str(user.get('userId') or '').strip()
+        caller_email = str(user.get('email') or '').strip().lower()
+        caller_groups = user.get('groups', [])
+        is_admin = 'Admin' in caller_groups or 'Security' in caller_groups
+
+        sanitized_items = []
         for it in items:
-            it['photoUrl'] = ensure_presigned_url(it.get('photoUrl', ''))
+            it_copy = dict(it)
+            it_copy['photoUrl'] = ensure_presigned_url(it_copy.get('photoUrl', ''))
+            
+            is_owner = (
+                (caller_id != 'anonymous-user' and bool(caller_id) and caller_id == str(it_copy.get('userId', ''))) or
+                (bool(caller_email) and caller_email == str(it_copy.get('userEmail', '')).lower())
+            )
+            
+            if not is_owner and not is_admin:
+                raw_email = str(it_copy.get('userEmail', '')).strip()
+                if raw_email and '@' in raw_email:
+                    parts = raw_email.split('@')
+                    name_part = parts[0]
+                    masked_name = name_part[0] + '***' if len(name_part) > 1 else '***'
+                    it_copy['userEmail'] = f"{masked_name}@{parts[1]}"
+                else:
+                    it_copy['userEmail'] = ''
+
+                contact = str(it_copy.get('contactInfo', '')).strip()
+                if raw_email and raw_email in contact:
+                    it_copy['contactInfo'] = 'Contact via In-App Claim / Campus Safety'
+                
+                # Redact internal user IDs from public listing
+                it_copy['userId'] = ''
+                
+            sanitized_items.append(it_copy)
 
         # Sort by createdAt descending
-        items.sort(key=lambda x: x.get('createdAt', ''), reverse=True)
-        return build_cors_response(200, {'items': items, 'count': len(items)})
-
+        sanitized_items.sort(key=lambda x: x.get('createdAt', ''), reverse=True)
+        return build_cors_response(200, {'items': sanitized_items, 'count': len(sanitized_items)})
 
     except Exception as e:
         logger.error(f"Error querying items: {e}")
@@ -234,9 +265,9 @@ def handle_create_item(body_data: Dict[str, Any], event: Dict[str, Any], table) 
         except (ValueError, TypeError) as e:
             logger.warning(f"Could not parse dateTime '{raw_date}': {e}")
 
-    # Secure user identity assignment
-    creator_user_id = user['userId'] if user['userId'] != 'anonymous-user' else (body_data.get('userId') or 'usr-anonymous')
-    creator_user_email = user['email'] if user['email'] else (body_data.get('userEmail') or '')
+    # Secure user identity assignment - strictly derived from token claims
+    creator_user_id = user['userId'] if user['userId'] != 'anonymous-user' else 'usr-anonymous'
+    creator_user_email = user['email'] if user['email'] else ''
 
     ai_tags = body_data.get('ai_tags', [])
     detected_labels = body_data.get('detected_labels', [])
@@ -281,21 +312,49 @@ def handle_create_item(body_data: Dict[str, Any], event: Dict[str, Any], table) 
         logger.error(f"Error creating item: {e}")
         return build_cors_response(500, {'error': str(e)})
 
-def handle_get_item(item_id: str, table) -> Dict[str, Any]:
-    """Retrieve single item by ID."""
+def handle_get_item(item_id: str, table, event: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Retrieve single item by ID with PII protection."""
     try:
         response = table.get_item(Key={'id': item_id})
         item = response.get('Item')
         if not item:
             return build_cors_response(404, {'error': f"Item '{item_id}' not found"})
-        item['photoUrl'] = ensure_presigned_url(item.get('photoUrl', ''))
-        return build_cors_response(200, {'item': item})
+        
+        user = get_user_from_event(event) if event else {'userId': 'anonymous-user', 'email': '', 'groups': []}
+        caller_id = str(user.get('userId') or '').strip()
+        caller_email = str(user.get('email') or '').strip().lower()
+        caller_groups = user.get('groups', [])
+        is_admin = 'Admin' in caller_groups or 'Security' in caller_groups
+
+        item_copy = dict(item)
+        item_copy['photoUrl'] = ensure_presigned_url(item_copy.get('photoUrl', ''))
+
+        is_owner = (
+            (caller_id != 'anonymous-user' and bool(caller_id) and caller_id == str(item_copy.get('userId', ''))) or
+            (bool(caller_email) and caller_email == str(item_copy.get('userEmail', '')).lower())
+        )
+
+        if not is_owner and not is_admin:
+            raw_email = str(item_copy.get('userEmail', '')).strip()
+            if raw_email and '@' in raw_email:
+                parts = raw_email.split('@')
+                name_part = parts[0]
+                masked_name = name_part[0] + '***' if len(name_part) > 1 else '***'
+                item_copy['userEmail'] = f"{masked_name}@{parts[1]}"
+            else:
+                item_copy['userEmail'] = ''
+            contact = str(item_copy.get('contactInfo', '')).strip()
+            if raw_email and raw_email in contact:
+                item_copy['contactInfo'] = 'Contact via In-App Claim / Campus Safety'
+            item_copy['userId'] = ''
+
+        return build_cors_response(200, {'item': item_copy})
     except Exception as e:
         logger.error(f"Error retrieving item {item_id}: {e}")
         return build_cors_response(500, {'error': str(e)})
 
 def handle_update_item(item_id: str, body_data: Dict[str, Any], event: Dict[str, Any], table) -> Dict[str, Any]:
-    """Update item status with IDOR ownership validation (BUG-04)."""
+    """Update item status with strict IDOR ownership validation."""
     status = body_data.get('status')
     if not status or status.lower() not in ['open', 'claimed', 'resolved']:
         return build_cors_response(400, {'error': "Invalid status. Must be 'open', 'claimed', or 'resolved'"})
@@ -310,7 +369,7 @@ def handle_update_item(item_id: str, body_data: Dict[str, Any], event: Dict[str,
         logger.error(f"Error checking item {item_id} before update: {e}")
         return build_cors_response(500, {'error': str(e)})
 
-    # IDOR ownership & role verification
+    # Strict token-derived identity verification
     user = get_user_from_event(event)
     caller_id = str(user.get('userId') or '').strip()
     caller_email = str(user.get('email') or '').strip().lower()
@@ -320,22 +379,14 @@ def handle_update_item(item_id: str, body_data: Dict[str, Any], event: Dict[str,
     
     existing_id = str(existing_item.get('userId') or '').strip()
     existing_email = str(existing_item.get('userEmail') or '').strip().lower()
-    
-    body_id = str(body_data.get('userId') or '').strip()
-    body_email = str(body_data.get('userEmail') or '').strip().lower()
-    
+
     is_owner = (
         (caller_id != 'anonymous-user' and bool(caller_id) and caller_id == existing_id) or
-        (bool(caller_email) and caller_email == existing_email) or
-        (bool(body_email) and body_email == existing_email) or
-        (bool(body_id) and body_id == existing_id)
+        (bool(caller_email) and caller_email == existing_email)
     )
     is_admin = (
         'Admin' in caller_groups or 
-        'Security' in caller_groups or 
-        str(user.get('role', '')).lower() in ['admin', 'security'] or
-        caller_email == 'jerisheugin2567@gmail.com' or
-        body_email == 'jerisheugin2567@gmail.com'
+        'Security' in caller_groups
     )
 
     if not is_owner and not is_admin:
@@ -361,7 +412,7 @@ def handle_update_item(item_id: str, body_data: Dict[str, Any], event: Dict[str,
         return build_cors_response(500, {'error': str(e)})
 
 def handle_delete_item(item_id: str, event: Dict[str, Any], table) -> Dict[str, Any]:
-    """Delete an item report with ownership validation (BUG-09)."""
+    """Delete an item report with strict ownership validation."""
     try:
         existing_res = table.get_item(Key={'id': item_id})
         existing_item = existing_res.get('Item')
@@ -371,7 +422,7 @@ def handle_delete_item(item_id: str, event: Dict[str, Any], table) -> Dict[str, 
         logger.error(f"Error checking item {item_id} before deletion: {e}")
         return build_cors_response(500, {'error': str(e)})
 
-    # IDOR ownership & role verification
+    # Strict token-derived identity verification
     user = get_user_from_event(event)
     caller_id = str(user.get('userId') or '').strip()
     caller_email = str(user.get('email') or '').strip().lower()
@@ -388,9 +439,7 @@ def handle_delete_item(item_id: str, event: Dict[str, Any], table) -> Dict[str, 
     )
     is_admin = (
         'Admin' in caller_groups or 
-        'Security' in caller_groups or 
-        str(user.get('role', '')).lower() in ['admin', 'security'] or
-        caller_email == 'jerisheugin2567@gmail.com'
+        'Security' in caller_groups
     )
 
     if not is_owner and not is_admin:
@@ -483,7 +532,7 @@ def handle_notify_match(body_data: Dict[str, Any], event: Dict[str, Any], table)
         ses_error = None
         try:
             ses_client = boto3.client('ses', region_name=AWS_REGION)
-            ses_from = os.environ.get('SES_SENDER_EMAIL', 'jerisheugin2567@gmail.com')
+            ses_from = os.environ.get('SES_SENDER_EMAIL', 'alerts@campusfind.vitstudent.ac.in')
             ses_client.send_email(
                 Source=ses_from,
                 Destination={
@@ -555,7 +604,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if path_params.get('id') or (len(path.strip('/').split('/')) == 2 and path.strip('/').split('/')[1] not in ('items', 'notify-match', 'notify-claim')):
         item_id = path_params.get('id') or path.strip('/').split('/')[1]
         if http_method == 'GET':
-            return handle_get_item(item_id, table)
+            return handle_get_item(item_id, table, event)
         elif http_method == 'PATCH':
             # BUG-08: Safe JSON parsing
             try:
@@ -570,7 +619,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     # Route: /items
     if http_method == 'GET':
-        return handle_list_items(query_params, table)
+        return handle_list_items(query_params, table, event)
     elif http_method == 'POST':
         # BUG-08: Safe JSON parsing
         try:

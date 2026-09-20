@@ -26,12 +26,10 @@ def lambda_handler(event, context):
     if trigger_source in ['PostConfirmation_ConfirmSignUp', 'PostConfirmation_ConfirmForgotPassword']:
         cognito = boto3.client('cognito-idp', region_name=AWS_REGION)
         
-        # 1. Automatic Group Assignment (Student vs Admin)
-        role = str(user_attrs.get('custom:role', '')).lower()
-        if email == 'jerisheugin2567@gmail.com' or role in ['admin', 'security', 'campus_police']:
-            target_group = 'Admin'
-        else:
-            target_group = 'Student'
+        # 1. Automatic Group Assignment (Strict Role-Based Access Control)
+        # All public self-registered accounts are strictly assigned to the 'Student' group.
+        # Admin / Security elevated privileges must be provisioned out-of-band by administrators.
+        target_group = 'Student'
             
         try:
             cognito.admin_add_user_to_group(

@@ -21,7 +21,10 @@ functions = [
     'campusfind-stack-UploadPresignFunction-SQLqaaJ1Nx1f',
     'campusfind-stack-ItemsFunction-EyCvEzxJrwwg',
     'campusfind-stack-AlertsFunction-ZdPNcRr770ZS',
-    'campusfind-stack-RekognitionTriggerFunction-xPrt8qGuAccU'
+    'campusfind-stack-RekognitionTriggerFunction-xPrt8qGuAccU',
+    'campusfind-cognito-presignup-trigger',
+    'campusfind-cognito-postconfirmation-trigger',
+    'campusfind-cognito-custommessage-trigger'
 ]
 
 for fn in functions:

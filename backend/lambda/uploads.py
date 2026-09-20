@@ -109,7 +109,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Bucket': BUCKET_NAME,
                 'Key': unique_key
             },
-            ExpiresIn=604800  # 7 days
+            ExpiresIn=86400  # 24 hours
         )
 
         ai_tags = []

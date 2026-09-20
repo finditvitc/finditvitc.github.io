@@ -40,10 +40,11 @@ def build_cors_response(status_code: int, body: Any) -> Dict[str, Any]:
         'body': json.dumps(body, default=str)
     }
 
-def is_admin_or_security(event: Dict[str, Any], body_data: Dict[str, Any]) -> bool:
+def is_admin_or_security(event: Dict[str, Any]) -> bool:
     """
-    Checks if requester belongs to Cognito 'Admin' or 'Security' group (BUG-05).
+    Checks if requester belongs to Cognito 'Admin' or 'Security' group.
     Strictly verifies cryptographically validated claims from API Gateway Cognito Authorizer or Bearer JWT.
+    Does NOT accept user-supplied body attributes or unverified self-asserted roles.
     """
     request_context = event.get('requestContext', {}) or {}
     authorizer = request_context.get('authorizer', {}) or {}
@@ -68,17 +69,11 @@ def is_admin_or_security(event: Dict[str, Any], body_data: Dict[str, Any]) -> bo
     if isinstance(groups, str):
         groups = [g.strip() for g in groups.split(',') if g.strip()]
 
-    email = str(claims.get('email') or body_data.get('userEmail') or '').strip().lower()
-    role = str(claims.get('custom:role') or claims.get('role') or '').strip().lower()
-
+    # Strictly verify Cognito Group membership ('Admin' or 'Security')
     if 'Admin' in groups or 'Security' in groups:
         return True
-    if role in ['admin', 'security', 'campus_police']:
-        return True
-    if email == 'jerisheugin2567@gmail.com':
-        return True
 
-    # If in local dev offline simulation mode only:
+    # Offline local simulation mode only
     auth_header = event.get('headers', {}).get('Authorization', '') or event.get('headers', {}).get('authorization', '')
     if os.environ.get('IS_OFFLINE') == 'true' and 'admin-token' in auth_header:
         return True
@@ -160,9 +155,10 @@ def send_ses_alert_email(alert_data: Dict[str, Any]) -> None:
             f"— FindIt VITC Emergency Broadcast System"
         )
         
-        recipients = ['jerisheugin2567@gmail.com', 'jerish.e2024@vitstudent.ac.in']
-        ses_from = os.environ.get('SES_SENDER_EMAIL', 'jerisheugin2567@gmail.com')
+        admin_email = os.environ.get('ADMIN_ALERT_EMAIL', '')
+        ses_from = os.environ.get('SES_SENDER_EMAIL', 'alerts@campusfind.vitstudent.ac.in')
         
+        recipients = [admin_email] if admin_email else []
         for recipient in recipients:
             try:
                 ses.send_email(
@@ -180,10 +176,10 @@ def send_ses_alert_email(alert_data: Dict[str, Any]) -> None:
         logger.warning(f"Could not initialize SES alert client: {e}")
 
 def handle_create_alert(body_data: Dict[str, Any], event: Dict[str, Any], table) -> Dict[str, Any]:
-    """Admin endpoint to create & broadcast an emergency alert with idempotency protection (BUG-05, BUG-15)."""
-    if not is_admin_or_security(event, body_data):
+    """Admin endpoint to create & broadcast an emergency alert with idempotency protection."""
+    if not is_admin_or_security(event):
         return build_cors_response(403, {
-            'error': 'Unauthorized: Only users in the Admin or Security group can broadcast emergency alerts.'
+            'error': 'Unauthorized: Only verified users in the Admin or Security group can broadcast emergency alerts.'
         })
 
     title = str(body_data.get('title', '')).strip()
@@ -291,9 +287,9 @@ def handle_subscribe_student(body_data: Dict[str, Any]) -> Dict[str, Any]:
 
 def handle_terminate_alert(body_data: Dict[str, Any], event: Dict[str, Any], table) -> Dict[str, Any]:
     """Admin endpoint to stand-down and terminate active emergency alerts."""
-    if not is_admin_or_security(event, body_data):
+    if not is_admin_or_security(event):
         return build_cors_response(403, {
-            'error': 'Unauthorized: Only users in the Admin or Security group can terminate emergency alerts.'
+            'error': 'Unauthorized: Only verified users in the Admin or Security group can terminate emergency alerts.'
         })
 
     alert_id = str(body_data.get('id', '')).strip()

@@ -715,3 +715,94 @@ def test_items_rejects_overlength_title():
         assert '100' in body['error']
 
 
+# =============================================================================
+# Security Hardening Tests: PII Protection & Anti-Spoofing
+# =============================================================================
+
+def test_items_list_masks_pii_for_unauthenticated_callers():
+    mock_table = MagicMock()
+    mock_table.scan.return_value = {
+        'Items': [
+            {
+                'id': 'item-101',
+                'title': 'Blue HydroFlask',
+                'type': 'lost',
+                'category': 'Drinkware',
+                'location': 'Library',
+                'userEmail': 'student.john2024@vitstudent.ac.in',
+                'userId': 'cognito-sub-12345',
+                'contactInfo': 'student.john2024@vitstudent.ac.in',
+                'createdAt': '2026-09-20T10:00:00Z'
+            }
+        ]
+    }
+
+    event = {
+        'httpMethod': 'GET',
+        'path': '/items',
+        'queryStringParameters': None,
+        'headers': {}
+    }
+    with patch.object(items, 'get_dynamodb_table', return_value=mock_table):
+        res = items.lambda_handler(event, None)
+        assert res['statusCode'] == 200
+        body = json.loads(res['body'])
+        item = body['items'][0]
+        # Full raw email and internal userId must be redacted/masked
+        assert item['userEmail'] == 's***@vitstudent.ac.in'
+        assert item['userId'] == ''
+        assert 'student.john2024@vitstudent.ac.in' not in item['contactInfo']
+
+
+def test_alerts_rejects_unauthorized_user_with_spoofed_body():
+    mock_table = MagicMock()
+    event = {
+        'httpMethod': 'POST',
+        'path': '/alerts',
+        'headers': {},
+        'body': json.dumps({
+            'title': 'Fake Alert',
+            'message': 'Testing spoofing',
+            'severity': 'critical',
+            'userEmail': 'jerisheugin2567@gmail.com',
+            'role': 'admin'
+        })
+    }
+    with patch.object(alerts, 'get_dynamodb_table', return_value=mock_table):
+        res = alerts.lambda_handler(event, None)
+        assert res['statusCode'] == 403
+        body = json.loads(res['body'])
+        assert 'Unauthorized' in body['error']
+
+
+def test_items_update_rejects_body_email_spoofing():
+    mock_table = MagicMock()
+    mock_table.get_item.return_value = {
+        'Item': {
+            'id': 'item-victim',
+            'title': 'Victim Laptop',
+            'userEmail': 'victim.student2024@vitstudent.ac.in',
+            'userId': 'victim-sub-999',
+            'status': 'open'
+        }
+    }
+
+    # Attacker tries to update status by putting victim's email in body without auth token
+    event = {
+        'httpMethod': 'PATCH',
+        'path': '/items/item-victim',
+        'pathParameters': {'id': 'item-victim'},
+        'headers': {},
+        'body': json.dumps({
+            'status': 'claimed',
+            'userEmail': 'victim.student2024@vitstudent.ac.in'
+        })
+    }
+    with patch.object(items, 'get_dynamodb_table', return_value=mock_table):
+        res = items.lambda_handler(event, None)
+        assert res['statusCode'] == 403
+        body = json.loads(res['body'])
+        assert 'Forbidden' in body['error']
+
+
+

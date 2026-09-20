@@ -31,6 +31,15 @@ frontend/.env.local
 # Build outputs
 frontend/dist-ssr
 *.local
+infrastructure/.aws-sam/
+.aws-sam/
+
+# Test Uploads
+backend/uploads/*.jpg
+backend/uploads/*.jpeg
+backend/uploads/*.png
+backend/uploads/*.avif
+backend/uploads/*.webp
 
 # Logs
 npm-debug.log*
@@ -44,3 +53,5 @@ lerna-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+~$*
+*.docx.tmp
