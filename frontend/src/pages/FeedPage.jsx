@@ -37,24 +37,25 @@ const LOCATIONS = [
   'AB3',
   'AB4',
   'AB5',
-  'LIBRARY',
   'ADMIN BLOCK',
-  'MG AUDITORIUM',
-  'NETAJI AUDITORIUM',
-  'KASTURBA AUDITORIUM',
-  'VOC AUDITORIUM',
+  'BASKETBALL COURT',
   'CRICKET GROUND',
   'FOOTBALL GROUND',
   'GAZEBO',
-  'NORTH SQUARE',
-  'LASSI HOUSE',
-  'SWIMMING POOL',
-  'VOLLEYBALL COURT',
-  'BASKETBALL COURT',
-  'GYMNASIUM',
   'GYMKHANA',
-  'VMART'
+  'GYMNASIUM',
+  'KASTURBA AUDITORIUM',
+  'LASSI HOUSE',
+  'LIBRARY',
+  'MG AUDITORIUM',
+  'NETAJI AUDITORIUM',
+  'NORTH SQUARE',
+  'SWIMMING POOL',
+  'VMART',
+  'VOC AUDITORIUM',
+  'VOLLEYBALL COURT'
 ];
+
 
 export const FeedPage = ({ onSelectItem, onSelectMatches, onNavigateReport, feedRefreshKey }) => {
   const [items, setItems] = useState([]);

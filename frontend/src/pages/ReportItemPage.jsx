@@ -43,24 +43,25 @@ const CAMPUS_LOCATIONS = [
   'AB3',
   'AB4',
   'AB5',
-  'LIBRARY',
   'ADMIN BLOCK',
-  'MG AUDITORIUM',
-  'NETAJI AUDITORIUM',
-  'KASTURBA AUDITORIUM',
-  'VOC AUDITORIUM',
+  'BASKETBALL COURT',
   'CRICKET GROUND',
   'FOOTBALL GROUND',
   'GAZEBO',
-  'NORTH SQUARE',
-  'LASSI HOUSE',
-  'SWIMMING POOL',
-  'VOLLEYBALL COURT',
-  'BASKETBALL COURT',
-  'GYMNASIUM',
   'GYMKHANA',
-  'VMART'
+  'GYMNASIUM',
+  'KASTURBA AUDITORIUM',
+  'LASSI HOUSE',
+  'LIBRARY',
+  'MG AUDITORIUM',
+  'NETAJI AUDITORIUM',
+  'NORTH SQUARE',
+  'SWIMMING POOL',
+  'VMART',
+  'VOC AUDITORIUM',
+  'VOLLEYBALL COURT'
 ];
+
 
 // Instant client-side semantic & visual tag extractor
 const extractClientTags = (fileName = '', itemTitle = '', itemCategory = '', itemDesc = '', pixelColor = null) => {
