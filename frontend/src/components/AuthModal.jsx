@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mail, Lock, GraduationCap, UserPlus, LogIn, Building, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Mail, Lock, GraduationCap, UserPlus, LogIn, Building, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { useAuth, VIT_CHENNAI_SCHOOLS } from '../context/AuthContext';
 
 export const AuthModal = () => {
@@ -8,6 +8,7 @@ export const AuthModal = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [department, setDepartment] = useState(VIT_CHENNAI_SCHOOLS[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -137,13 +138,21 @@ export const AuthModal = () => {
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-xs outline-none transition"
+                className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-xs outline-none transition"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition"
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
